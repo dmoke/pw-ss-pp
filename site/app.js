@@ -3,10 +3,13 @@ class DemoShop {
     constructor() {
         this.currentUser = null;
         this.cart = [];
+        this.loginCount = 0;
         this.init();
     }
 
     init() {
+        // Load login count from localStorage
+        this.loginCount = parseInt(localStorage.getItem('loginCount') || '0');
         this.checkAuthStatus();
         this.setupEventListeners();
         this.updateUI();
@@ -14,11 +17,22 @@ class DemoShop {
 
     checkAuthStatus() {
         // Check if user is logged in via sessionStorage
-        const userData = sessionStorage.getItem('user');
-        if (userData) {
+        const sessionData = sessionStorage.getItem('session');
+        if (sessionData) {
             try {
-                this.currentUser = JSON.parse(userData);
-                this.showDashboard();
+                const session = JSON.parse(sessionData);
+                const expiresAt = new Date(session.expiresAt);
+                const now = new Date();
+                
+                // Check if session is still valid (not expired)
+                if (expiresAt > now) {
+                    this.currentUser = session;
+                    this.showDashboard();
+                } else {
+                    // Session expired
+                    sessionStorage.removeItem('session');
+                    this.showLogin();
+                }
             } catch (e) {
                 this.showLogin();
             }
@@ -70,15 +84,25 @@ class DemoShop {
 
         const user = validUsers[username];
         if (user && user.password === password) {
+            this.loginCount++;
+            localStorage.setItem('loginCount', this.loginCount.toString());
+            console.log(`🔐 LOGIN REQUEST #${this.loginCount}: User ${username} logged in`);
+
+            const now = new Date();
+            const expiresAt = new Date(now.getTime() + 30 * 60 * 1000);
+            
             this.currentUser = {
                 username: username,
                 name: user.name,
                 role: user.role,
-                lastLogin: new Date().toLocaleString()
+                token: `token_${username}_${now.getTime()}`,
+                issuedAt: now.toISOString(),
+                expiresAt: expiresAt.toISOString(),
+                lastLogin: now.toLocaleString()
             };
 
-            // Store in sessionStorage
-            sessionStorage.setItem('user', JSON.stringify(this.currentUser));
+            // Store session with token in sessionStorage
+            sessionStorage.setItem('session', JSON.stringify(this.currentUser));
 
             // Store cart in sessionStorage if exists
             const savedCart = sessionStorage.getItem('cart');
@@ -98,7 +122,7 @@ class DemoShop {
         sessionStorage.setItem('cart', JSON.stringify(this.cart));
 
         // Clear user session
-        sessionStorage.removeItem('user');
+        sessionStorage.removeItem('session');
         this.currentUser = null;
         this.cart = [];
         this.showLogin();
@@ -274,4 +298,5 @@ class DemoShop {
 }
 
 // Initialize the app
-const app = new DemoShop();
+// Initialize the app and expose it globally for testing
+window.demoShop = new DemoShop();

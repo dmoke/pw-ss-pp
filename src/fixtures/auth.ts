@@ -1,34 +1,31 @@
 import { test as base, expect, Page } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
-import { TEST_ACCOUNTS, AUTH_FILE } from '../test-data/accounts';
+import { TEST_ACCOUNTS } from '../testData';
 import { LoginPage } from '../pages/LoginPage';
 import { DashboardPage } from '../pages/DashboardPage';
+import { LoginLogger } from '../utils/LoginLogger';
 
 const authStorageDir = path.join(__dirname, '../../.auth');
-const sessionStorageFile = (accountIndex: number) => 
-  path.join(authStorageDir, `session-storage-${accountIndex}.json`);
+const getSessionStorageFile = (username: string) => 
+  path.join(authStorageDir, `${username}.json`);
 
-function getAuthFile(accountIndex: number): string {
-  return path.join(authStorageDir, `${AUTH_FILE.replace('.json', '')}-${accountIndex}.json`);
-}
-
-async function loadSessionStorage(page: Page, accountIndex: number): Promise<void> {
-  const sessionFile = sessionStorageFile(accountIndex);
+async function loadSessionStorage(page: Page, username: string): Promise<void> {
+  const sessionFile = getSessionStorageFile(username);
   
   if (fs.existsSync(sessionFile)) {
     const sessionData = JSON.parse(fs.readFileSync(sessionFile, 'utf-8'));
     await page.context().addInitScript((storage: Record<string, string>) => {
-      if (window.location.hostname === new URL(page.url()).hostname) {
-        for (const [key, value] of Object.entries(storage)) {
-          window.sessionStorage.setItem(key, value);
-        }
+
+        
+      for (const [key, value] of Object.entries(storage)) {
+        window.sessionStorage.setItem(key, value);
       }
     }, sessionData);
   }
 }
 
-async function saveSessionStorage(page: Page, accountIndex: number): Promise<void> {
+async function saveSessionStorage(page: Page, username: string): Promise<void> {
   if (!fs.existsSync(authStorageDir)) {
     fs.mkdirSync(authStorageDir, { recursive: true });
   }
@@ -44,49 +41,21 @@ async function saveSessionStorage(page: Page, accountIndex: number): Promise<voi
     return storage;
   });
 
-  fs.writeFileSync(sessionStorageFile(accountIndex), JSON.stringify(sessionData, null, 2));
-}
-
-async function setupAuthStorage(page: Page, accountIndex: number): Promise<void> {
-  const authFile = getAuthFile(accountIndex);
-  
-  if (fs.existsSync(authFile)) {
-    const storageState = JSON.parse(fs.readFileSync(authFile, 'utf-8'));
-    await page.context().addCookies(storageState.cookies || []);
-    await page.evaluate((state: any) => {
-      const localStorage = state.localStorage || [];
-      localStorage.forEach((item: any) => {
-        window.localStorage.setItem(item.name, item.value);
-      });
-    }, storageState);
-  }
-
-  await loadSessionStorage(page, accountIndex);
-}
-
-async function saveAuthStorage(page: Page, accountIndex: number): Promise<void> {
-  if (!fs.existsSync(authStorageDir)) {
-    fs.mkdirSync(authStorageDir, { recursive: true });
-  }
-
-  const storageState = await page.context().storageState();
-  fs.writeFileSync(getAuthFile(accountIndex), JSON.stringify(storageState, null, 2));
-  
-  await saveSessionStorage(page, accountIndex);
+  fs.writeFileSync(getSessionStorageFile(username), JSON.stringify(sessionData, null, 2));
 }
 
 interface AuthFixtures {
   loginPage: LoginPage;
   dashboardPage: DashboardPage;
+  freshLoginPage: LoginPage;
+  freshDashboardPage: DashboardPage;
 }
 
 export const test = base.extend<AuthFixtures>({
-  loginPage: async ({ page }, use) => {
-    const accountIndex = (test as any).info?.workerIndex ?? 0 % TEST_ACCOUNTS.length;
+  loginPage: async ({ page }, use, testInfo) => {
+    const accountIndex = testInfo.workerIndex % TEST_ACCOUNTS.length;
     const account = TEST_ACCOUNTS[accountIndex];
 
-    await setupAuthStorage(page, accountIndex);
-    
     const loginPage = new LoginPage(page, account.username);
     await use(loginPage);
   },
@@ -94,32 +63,105 @@ export const test = base.extend<AuthFixtures>({
   dashboardPage: async ({ page }, use, testInfo) => {
     const accountIndex = testInfo.workerIndex % TEST_ACCOUNTS.length;
     const account = TEST_ACCOUNTS[accountIndex];
-    const authFile = getAuthFile(accountIndex);
+    const sessionFile = getSessionStorageFile(account.username);
 
-    if (fs.existsSync(authFile)) {
-      await setupAuthStorage(page, accountIndex);
+    if (fs.existsSync(sessionFile)) {
+      console.log(`[SESSION STORAGE] Worker ${testInfo.workerIndex}: Found existing session file for ${account.username}, attempting session reuse`);
+      await loadSessionStorage(page, account.username);
       await page.goto('/');
       
-      const isLoggedIn = await page.evaluate(() => {
-        return document.body.textContent?.includes('Hello') ?? false;
-      }).catch(() => false);
+      const isLoggedIn = await page.evaluate((username) => {
+        try {
+          const sessionData = sessionStorage.getItem('session');
+          if (sessionData) {
+            const session = JSON.parse(sessionData);
+            const expiresAt = new Date(session.expiresAt);
+            const now = new Date();
+            
+            if (session.username === username && expiresAt > now && session.token) {
+              return true;
+            }
+          }
+          return false;
+        } catch {
+          return false;
+        }
+      }, account.username).catch(() => false);
 
       if (isLoggedIn) {
+        console.log(`[SESSION STORAGE] Worker ${testInfo.workerIndex}: Session reuse successful for ${account.username}`);
         const dashboardPage = new DashboardPage(page, account.username);
+        LoginLogger.log({
+          username: account.username,
+          approach: 'session-storage',
+          testName: testInfo.titlePath.join(' › '),
+          workerIndex: testInfo.workerIndex,
+          action: 'reuse',
+        });
         await use(dashboardPage);
         return;
+      } else {
+        console.log(`[SESSION STORAGE] Worker ${testInfo.workerIndex}: Session reuse failed for ${account.username}, will perform fresh login`);
       }
     }
 
+    console.log(`[SESSION STORAGE] Worker ${testInfo.workerIndex}: Performing fresh login for ${account.username}`);
     const loginPage = new LoginPage(page, account.username);
     await loginPage.navigateToLogin();
     await loginPage.login(account.username, account.password);
     await loginPage.waitForLoginSuccess();
     await loginPage.assertLoggedIn();
-
-    await saveAuthStorage(page, accountIndex);
+    await saveSessionStorage(page, account.username);
+    
+    LoginLogger.log({
+      username: account.username,
+      approach: 'session-storage',
+      testName: testInfo.titlePath.join(' › '),
+      workerIndex: testInfo.workerIndex,
+      action: 'login',
+    });
 
     const dashboardPage = new DashboardPage(page, account.username);
+    await use(dashboardPage);
+  },
+
+  freshLoginPage: async ({ page }, use, testInfo) => {
+    const accountIndex = testInfo.workerIndex % TEST_ACCOUNTS.length;
+    const account = TEST_ACCOUNTS[accountIndex];
+
+    const loginPage = new LoginPage(page, account.username);
+    await use(loginPage);
+  },
+
+  freshDashboardPage: async ({ page }, use, testInfo) => {
+    const accountIndex = testInfo.workerIndex % TEST_ACCOUNTS.length;
+    const account = TEST_ACCOUNTS[accountIndex];
+
+    console.log(`[FRESH LOGIN] Worker ${testInfo.workerIndex}: Performing fresh login for ${account.username} (no session reuse)`);
+    const loginPage = new LoginPage(page, account.username);
+    await loginPage.navigateToLogin();
+    
+    const loginCountBefore = await page.evaluate(() => (window as any).demoShop?.loginCount || 0).catch(() => 0);
+    
+    await loginPage.login(account.username, account.password);
+    await loginPage.waitForLoginSuccess();
+    await loginPage.assertLoggedIn();
+
+    const loginCountAfter = await page.evaluate(() => (window as any).demoShop?.loginCount || 0).catch(() => 0);
+    
+    await saveSessionStorage(page, account.username);
+    
+    LoginLogger.log({
+      username: account.username,
+      approach: 'fresh-login',
+      testName: testInfo.titlePath.join(' › '),
+      workerIndex: testInfo.workerIndex,
+      action: 'login',
+    });
+    
+    const dashboardPage = new DashboardPage(page, account.username);
+    (dashboardPage as any).loginsInThisTest = loginCountAfter - loginCountBefore;
+    
     await use(dashboardPage);
   },
 });

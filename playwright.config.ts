@@ -5,7 +5,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 4, // Limit to 4 workers for demo
+  workers: 5, // One worker per test account
   reporter: 'html',
   use: {
     baseURL: 'http://localhost:3000',

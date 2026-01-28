@@ -1,0 +1,25 @@
+{
+  "name": "pw-ss-pp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:auth": "playwright test tests/auth.spec.ts",
+    "test:guest": "playwright test tests/guest.spec.ts",
+    "test:concurrency": "playwright test tests/concurrency.spec.ts",
+    "test:report": "playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.0",
+    "@types/node": "^25.1.0",
+    "http-server": "^14.1.1",
+    "typescript": "^5.9.3"
+  }
+}

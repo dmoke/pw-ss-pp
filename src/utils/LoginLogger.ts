@@ -1,8 +1,9 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from "node:fs";
+import path from "node:path";
 
-const AUTH_DIR = path.join(__dirname, '..', '..', '.auth');
-const LOG_FILE = path.join(AUTH_DIR, 'login-log.json');
+const AUTH_DIR = path.join(process.cwd(), ".auth");
+const LOG_FILE = path.join(AUTH_DIR, "login-log.json");
+
 
 export interface LoginRecord {
   timestamp: string;

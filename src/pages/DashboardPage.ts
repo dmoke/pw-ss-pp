@@ -1,10 +1,7 @@
-import { BasePage } from './BasePage';
+import { BasePage } from './BasePage.js';
 import { expect } from '@playwright/test';
 
 export class DashboardPage extends BasePage {
-  async navigateToDashboard(): Promise<void> {
-    await this.goto('/');
-  }
 
   async assertDashboardLoaded(): Promise<void> {
     const dashboard = this.page.locator('#dashboard-page');

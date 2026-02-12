@@ -1,6 +1,6 @@
-import { test, expect } from '../src/fixtures/auth';
-import { ACCOUNT_USERNAMES } from '../src/testData';
-import { LoginLogger } from '../src/utils/LoginLogger';
+import { test, expect } from '../fixtures/auth.js';
+import { ACCOUNT_USERNAMES } from '../src/testData.js';
+import { LoginLogger } from '../src/utils/LoginLogger.js';
 
 const workerMap = new Map<number, number>();
 let nextWorkerIndex = 0;

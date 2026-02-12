@@ -1,23 +1,26 @@
-import { Page } from '@playwright/test';
+import { Page } from "@playwright/test";
 
 export abstract class BasePage {
-  readonly page: Page;
+  protected path = "";
   readonly username: string;
 
-  constructor(page: Page, username: string) {
-    this.page = page;
+  constructor(
+    public page: Page,
+    username: string,
+  ) {
     this.username = username;
   }
 
-  async goto(path: string = ''): Promise<void> {
-    await this.page.goto(path || '/');
+  async navigate() {
+    await this.page.goto(this.path, { waitUntil: "domcontentloaded" });
+    await this.page.waitForTimeout(1_000);
   }
 
   async waitForNavigation(urlPattern?: string): Promise<void> {
     if (urlPattern) {
       await this.page.waitForURL(urlPattern);
     } else {
-      await this.page.waitForLoadState('networkidle');
+      await this.page.waitForLoadState("networkidle");
     }
   }
 
@@ -45,11 +48,20 @@ export abstract class BasePage {
     return this.page.textContent(selector);
   }
 
-  protected async isVisible(selector: string, timeout: number = 5000): Promise<boolean> {
-    return this.page.locator(selector).isVisible({ timeout }).catch(() => false);
+  protected async isVisible(
+    selector: string,
+    timeout: number = 5000,
+  ): Promise<boolean> {
+    return this.page
+      .locator(selector)
+      .isVisible({ timeout })
+      .catch(() => false);
   }
 
-  protected async waitForElement(selector: string, timeout: number = 5000): Promise<boolean> {
+  protected async waitForElement(
+    selector: string,
+    timeout: number = 5000,
+  ): Promise<boolean> {
     try {
       await this.page.waitForSelector(selector, { timeout });
       return true;

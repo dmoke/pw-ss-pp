@@ -1,10 +1,8 @@
-import { BasePage } from './BasePage';
+import { BasePage } from './BasePage.js';
 import { expect } from '@playwright/test';
 
 export class LoginPage extends BasePage {
-  async navigateToLogin(): Promise<void> {
-    await this.goto('/');
-  }
+  protected path = "/";
 
   async login(username: string, password: string): Promise<void> {
     await this.fill('#username', username);

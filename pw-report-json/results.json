@@ -1,0 +1,179 @@
+{
+  "config": {
+    "configFile": "C:\\Users\\dmytr\\dev\\bu_PP\\pw-ss-pp\\playwright.config.ts",
+    "rootDir": "C:/Users/dmytr/dev/bu_PP/pw-ss-pp/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/dmytr/dev/bu_PP/pw-ss-pp/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/dmytr/dev/bu_PP/pw-ss-pp/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 600000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "html",
+        {
+          "open": "never",
+          "outputFolder": "pw-report-html"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "report/generatedReports/desktop/combined-desktop.xml"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "pw-report-json/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "3way",
+    "version": "1.58.0",
+    "workers": 1,
+    "webServer": {
+      "command": "npx http-server site -p 3000 -c-1",
+      "port": 3000,
+      "reuseExistingServer": true
+    }
+  },
+  "suites": [
+    {
+      "title": "sessionAuthComparison.spec.ts",
+      "file": "sessionAuthComparison.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Session Storage vs Fresh Login Comparison",
+          "file": "sessionAuthComparison.spec.ts",
+          "line": 23,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Fresh Login Approach (no auth reuse)",
+              "file": "sessionAuthComparison.spec.ts",
+              "line": 63,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "consistency check",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 600000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 539,
+                          "error": {
+                            "message": "TypeError: loginPage.navigate is not a function",
+                            "stack": "TypeError: loginPage.navigate is not a function\n    at Object.freshDashboardPage (C:\\Users\\dmytr\\dev\\bu_PP\\pw-ss-pp\\fixtures\\auth.ts:142:21)",
+                            "location": {
+                              "file": "C:\\Users\\dmytr\\dev\\bu_PP\\pw-ss-pp\\fixtures\\auth.ts",
+                              "column": 21,
+                              "line": 142
+                            },
+                            "snippet": "\u001b[90m   at \u001b[39m..\\fixtures\\auth.ts:142\n\n\u001b[0m \u001b[90m 140 |\u001b[39m     console\u001b[33m.\u001b[39mlog(\u001b[32m`[FRESH LOGIN] Worker ${testInfo.workerIndex}: Performing fresh login for ${account.username} (no session reuse)`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 141 |\u001b[39m     \u001b[36mconst\u001b[39m loginPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mLoginPage\u001b[39m(page\u001b[33m,\u001b[39m account\u001b[33m.\u001b[39musername)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 142 |\u001b[39m     \u001b[36mawait\u001b[39m loginPage\u001b[33m.\u001b[39mnavigate()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                     \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 143 |\u001b[39m     \n \u001b[90m 144 |\u001b[39m     \u001b[36mconst\u001b[39m loginCountBefore \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mevaluate(() \u001b[33m=>\u001b[39m (window \u001b[36mas\u001b[39m any)\u001b[33m.\u001b[39mdemoShop\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mloginCount \u001b[33m||\u001b[39m \u001b[35m0\u001b[39m)\u001b[33m.\u001b[39m\u001b[36mcatch\u001b[39m(() \u001b[33m=>\u001b[39m \u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 145 |\u001b[39m     \u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\dmytr\\dev\\bu_PP\\pw-ss-pp\\fixtures\\auth.ts",
+                                "column": 21,
+                                "line": 142
+                              },
+                              "message": "TypeError: loginPage.navigate is not a function\n\n\u001b[90m   at \u001b[39m..\\fixtures\\auth.ts:142\n\n\u001b[0m \u001b[90m 140 |\u001b[39m     console\u001b[33m.\u001b[39mlog(\u001b[32m`[FRESH LOGIN] Worker ${testInfo.workerIndex}: Performing fresh login for ${account.username} (no session reuse)`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 141 |\u001b[39m     \u001b[36mconst\u001b[39m loginPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mLoginPage\u001b[39m(page\u001b[33m,\u001b[39m account\u001b[33m.\u001b[39musername)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 142 |\u001b[39m     \u001b[36mawait\u001b[39m loginPage\u001b[33m.\u001b[39mnavigate()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                     \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 143 |\u001b[39m     \n \u001b[90m 144 |\u001b[39m     \u001b[36mconst\u001b[39m loginCountBefore \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mevaluate(() \u001b[33m=>\u001b[39m (window \u001b[36mas\u001b[39m any)\u001b[33m.\u001b[39mdemoShop\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mloginCount \u001b[33m||\u001b[39m \u001b[35m0\u001b[39m)\u001b[33m.\u001b[39m\u001b[36mcatch\u001b[39m(() \u001b[33m=>\u001b[39m \u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 145 |\u001b[39m     \u001b[0m\n\u001b[2m    at Object.freshDashboardPage (C:\\Users\\dmytr\\dev\\bu_PP\\pw-ss-pp\\fixtures\\auth.ts:142:21)\u001b[22m"
+                            }
+                          ],
+                          "stdout": [
+                            {
+                              "text": "[FRESH LOGIN] Worker 0: Performing fresh login for student (no session reuse)\n"
+                            }
+                          ],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-12T18:56:37.961Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "C:\\Users\\dmytr\\dev\\bu_PP\\pw-ss-pp\\test-results\\sessionAuthComparison-Sess-189f7-uth-reuse-consistency-check-chromium\\test-failed-1.png"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "C:\\Users\\dmytr\\dev\\bu_PP\\pw-ss-pp\\fixtures\\auth.ts",
+                            "column": 21,
+                            "line": 142
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "a4633a8cfe6c57381764-abfe3fd4fc88ff8e5abd",
+                  "file": "sessionAuthComparison.spec.ts",
+                  "line": 101,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-02-12T18:56:36.360Z",
+    "duration": 2597.7919999998994,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

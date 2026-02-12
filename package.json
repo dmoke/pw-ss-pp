@@ -2,6 +2,7 @@
   "name": "pw-ss-pp",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "playwright test",
@@ -11,7 +12,9 @@
     "test:auth": "playwright test tests/auth.spec.ts",
     "test:guest": "playwright test tests/guest.spec.ts",
     "test:concurrency": "playwright test tests/concurrency.spec.ts",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    "start": "cd site/ && npx serve . -l 3000",
+    "stop": "npx kill-port 3000"
   },
   "keywords": [],
   "author": "",
@@ -21,5 +24,9 @@
     "@types/node": "^25.1.0",
     "http-server": "^14.1.1",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.4",
+    "tslog": "^4.10.2"
   }
 }

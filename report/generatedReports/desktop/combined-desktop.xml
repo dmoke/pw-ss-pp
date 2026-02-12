@@ -1,0 +1,33 @@
+<testsuites id="" name="" tests="1" failures="1" skipped="0" errors="0" time="2.5977919999998993">
+<testsuite name="sessionAuthComparison.spec.ts" timestamp="2026-02-12T18:56:37.164Z" hostname="chromium" tests="1" failures="1" skipped="0" time="0.539" errors="0">
+<testcase name="Session Storage vs Fresh Login Comparison › Fresh Login Approach (no auth reuse) › consistency check" classname="sessionAuthComparison.spec.ts" time="0.539">
+<failure message="sessionAuthComparison.spec.ts:101:5 consistency check" type="FAILURE">
+<![CDATA[  [chromium] › sessionAuthComparison.spec.ts:101:5 › Session Storage vs Fresh Login Comparison › Fresh Login Approach (no auth reuse) › consistency check 
+
+    TypeError: loginPage.navigate is not a function
+
+       at ..\fixtures\auth.ts:142
+
+      140 |     console.log(`[FRESH LOGIN] Worker ${testInfo.workerIndex}: Performing fresh login for ${account.username} (no session reuse)`);
+      141 |     const loginPage = new LoginPage(page, account.username);
+    > 142 |     await loginPage.navigate();
+          |                     ^
+      143 |     
+      144 |     const loginCountBefore = await page.evaluate(() => (window as any).demoShop?.loginCount || 0).catch(() => 0);
+      145 |     
+        at Object.freshDashboardPage (C:\Users\dmytr\dev\bu_PP\pw-ss-pp\fixtures\auth.ts:142:21)
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\sessionAuthComparison-Sess-189f7-uth-reuse-consistency-check-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[[FRESH LOGIN] Worker 0: Performing fresh login for student (no session reuse)
+
+[[ATTACHMENT|..\..\..\test-results\sessionAuthComparison-Sess-189f7-uth-reuse-consistency-check-chromium\test-failed-1.png]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

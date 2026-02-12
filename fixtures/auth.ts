@@ -1,12 +1,12 @@
 import { test as base, expect, Page } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
-import { TEST_ACCOUNTS } from '../testData';
-import { LoginPage } from '../pages/LoginPage';
-import { DashboardPage } from '../pages/DashboardPage';
-import { LoginLogger } from '../utils/LoginLogger';
+import { TEST_ACCOUNTS } from '../src/testData.js';
+import { LoginPage } from '../src/pages/LoginPage.js';
+import { DashboardPage } from '../src/pages/DashboardPage.js';
+import { LoginLogger } from '../src/utils/LoginLogger.js';
 
-const authStorageDir = path.join(__dirname, '../../.auth');
+const authStorageDir = path.join(".", 'auth');
 const getSessionStorageFile = (username: string) => 
   path.join(authStorageDir, `${username}.json`);
 
@@ -107,7 +107,7 @@ export const test = base.extend<AuthFixtures>({
 
     console.log(`[SESSION STORAGE] Worker ${testInfo.workerIndex}: Performing fresh login for ${account.username}`);
     const loginPage = new LoginPage(page, account.username);
-    await loginPage.navigateToLogin();
+    await loginPage.navigate();
     await loginPage.login(account.username, account.password);
     await loginPage.waitForLoginSuccess();
     await loginPage.assertLoggedIn();
@@ -139,7 +139,7 @@ export const test = base.extend<AuthFixtures>({
 
     console.log(`[FRESH LOGIN] Worker ${testInfo.workerIndex}: Performing fresh login for ${account.username} (no session reuse)`);
     const loginPage = new LoginPage(page, account.username);
-    await loginPage.navigateToLogin();
+    await loginPage.navigate();
     
     const loginCountBefore = await page.evaluate(() => (window as any).demoShop?.loginCount || 0).catch(() => 0);
     
@@ -167,6 +167,6 @@ export const test = base.extend<AuthFixtures>({
 });
 
 export { expect };
-export { LoginPage } from '../pages/LoginPage';
-export { DashboardPage } from '../pages/DashboardPage';
-export { BasePage } from '../pages/BasePage';
+export { LoginPage } from '../src/pages/LoginPage.js';
+export { DashboardPage } from '../src/pages/DashboardPage.js';
+export { BasePage } from '../src/pages/BasePage.js';

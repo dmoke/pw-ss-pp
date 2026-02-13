@@ -94,7 +94,7 @@
               "specs": [
                 {
                   "title": "consistency check",
-                  "ok": false,
+                  "ok": true,
                   "tags": [],
                   "tests": [
                     {
@@ -105,54 +105,27 @@
                       "projectName": "chromium",
                       "results": [
                         {
-                          "workerIndex": 0,
+                          "workerIndex": 1,
                           "parallelIndex": 0,
-                          "status": "failed",
-                          "duration": 539,
-                          "error": {
-                            "message": "TypeError: loginPage.navigate is not a function",
-                            "stack": "TypeError: loginPage.navigate is not a function\n    at Object.freshDashboardPage (C:\\Users\\dmytr\\dev\\bu_PP\\pw-ss-pp\\fixtures\\auth.ts:142:21)",
-                            "location": {
-                              "file": "C:\\Users\\dmytr\\dev\\bu_PP\\pw-ss-pp\\fixtures\\auth.ts",
-                              "column": 21,
-                              "line": 142
-                            },
-                            "snippet": "\u001b[90m   at \u001b[39m..\\fixtures\\auth.ts:142\n\n\u001b[0m \u001b[90m 140 |\u001b[39m     console\u001b[33m.\u001b[39mlog(\u001b[32m`[FRESH LOGIN] Worker ${testInfo.workerIndex}: Performing fresh login for ${account.username} (no session reuse)`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 141 |\u001b[39m     \u001b[36mconst\u001b[39m loginPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mLoginPage\u001b[39m(page\u001b[33m,\u001b[39m account\u001b[33m.\u001b[39musername)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 142 |\u001b[39m     \u001b[36mawait\u001b[39m loginPage\u001b[33m.\u001b[39mnavigate()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                     \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 143 |\u001b[39m     \n \u001b[90m 144 |\u001b[39m     \u001b[36mconst\u001b[39m loginCountBefore \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mevaluate(() \u001b[33m=>\u001b[39m (window \u001b[36mas\u001b[39m any)\u001b[33m.\u001b[39mdemoShop\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mloginCount \u001b[33m||\u001b[39m \u001b[35m0\u001b[39m)\u001b[33m.\u001b[39m\u001b[36mcatch\u001b[39m(() \u001b[33m=>\u001b[39m \u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 145 |\u001b[39m     \u001b[0m"
-                          },
-                          "errors": [
-                            {
-                              "location": {
-                                "file": "C:\\Users\\dmytr\\dev\\bu_PP\\pw-ss-pp\\fixtures\\auth.ts",
-                                "column": 21,
-                                "line": 142
-                              },
-                              "message": "TypeError: loginPage.navigate is not a function\n\n\u001b[90m   at \u001b[39m..\\fixtures\\auth.ts:142\n\n\u001b[0m \u001b[90m 140 |\u001b[39m     console\u001b[33m.\u001b[39mlog(\u001b[32m`[FRESH LOGIN] Worker ${testInfo.workerIndex}: Performing fresh login for ${account.username} (no session reuse)`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 141 |\u001b[39m     \u001b[36mconst\u001b[39m loginPage \u001b[33m=\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mLoginPage\u001b[39m(page\u001b[33m,\u001b[39m account\u001b[33m.\u001b[39musername)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 142 |\u001b[39m     \u001b[36mawait\u001b[39m loginPage\u001b[33m.\u001b[39mnavigate()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                     \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 143 |\u001b[39m     \n \u001b[90m 144 |\u001b[39m     \u001b[36mconst\u001b[39m loginCountBefore \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mevaluate(() \u001b[33m=>\u001b[39m (window \u001b[36mas\u001b[39m any)\u001b[33m.\u001b[39mdemoShop\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mloginCount \u001b[33m||\u001b[39m \u001b[35m0\u001b[39m)\u001b[33m.\u001b[39m\u001b[36mcatch\u001b[39m(() \u001b[33m=>\u001b[39m \u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 145 |\u001b[39m     \u001b[0m\n\u001b[2m    at Object.freshDashboardPage (C:\\Users\\dmytr\\dev\\bu_PP\\pw-ss-pp\\fixtures\\auth.ts:142:21)\u001b[22m"
-                            }
-                          ],
+                          "status": "passed",
+                          "duration": 1642,
+                          "errors": [],
                           "stdout": [
                             {
-                              "text": "[FRESH LOGIN] Worker 0: Performing fresh login for student (no session reuse)\n"
+                              "text": "[FRESH LOGIN] Worker 1: Performing fresh login for testuser1 (no session reuse)\n"
+                            },
+                            {
+                              "text": "[FRESH] Worker 0 (testuser1) consistency verified\n"
                             }
                           ],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-02-12T18:56:37.961Z",
+                          "startTime": "2026-02-12T18:58:31.807Z",
                           "annotations": [],
-                          "attachments": [
-                            {
-                              "name": "screenshot",
-                              "contentType": "image/png",
-                              "path": "C:\\Users\\dmytr\\dev\\bu_PP\\pw-ss-pp\\test-results\\sessionAuthComparison-Sess-189f7-uth-reuse-consistency-check-chromium\\test-failed-1.png"
-                            }
-                          ],
-                          "errorLocation": {
-                            "file": "C:\\Users\\dmytr\\dev\\bu_PP\\pw-ss-pp\\fixtures\\auth.ts",
-                            "column": 21,
-                            "line": 142
-                          }
+                          "attachments": []
                         }
                       ],
-                      "status": "unexpected"
+                      "status": "expected"
                     }
                   ],
                   "id": "a4633a8cfe6c57381764-abfe3fd4fc88ff8e5abd",
@@ -169,11 +142,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-02-12T18:56:36.360Z",
-    "duration": 2597.7919999998994,
-    "expected": 0,
+    "startTime": "2026-02-12T18:58:30.158Z",
+    "duration": 3510.335999999894,
+    "expected": 1,
     "skipped": 0,
-    "unexpected": 1,
+    "unexpected": 0,
     "flaky": 0
   }
 }

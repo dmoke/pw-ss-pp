@@ -7,6 +7,7 @@ A complete Playwright TypeScript test suite with **565 tests** using session sto
 - **5 Guest Tests** - No authentication required
 - **550 Authenticated Tests** - Uses session storage auth (auth-001 to auth-550)
 - **10 Session/Worker Tests** - Validates round-robin account assignment
+- **API Demo Server** – same site exposes JSON endpoints at `/api/*` with a Swagger UI available to administrators
 
 ## Key Features
 
@@ -14,9 +15,11 @@ A complete Playwright TypeScript test suite with **565 tests** using session sto
 ✅ **No Login Overhead** - Session reuse eliminates repeated auth calls  
 ✅ **No Conflicts** - Round-robin assignment (worker ID → account)  
 ✅ **Parallel Execution** - Supports 1-10 workers seamlessly  
-✅ **Smart Session Management** - Auto-save/load credentials  
+✅ **Smart Session Management** - Auto-save/load credentials
 
 ## Running Tests
+
+> **Tip:** the test suite automatically starts `node server.js` (the same app under test). Once the server is up you can browse to `http://localhost:3000` and log in as `admin` to click the **API Docs (Swagger)** button.
 
 ```bash
 # Run all tests (565 tests across 4 files)
@@ -43,7 +46,7 @@ npm test -- --debug
 
 ## How Session Storage Works
 
-1. **First Test Run**: 
+1. **First Test Run**:
    - Account credentials loaded from `src/test-data/accounts.ts`
    - Login performed
    - Session saved to `.auth/auth-{index}.json`
@@ -89,21 +92,26 @@ testuser1-9   / Test@1234
 ## Configuration Examples
 
 ### Reduce Worker Count
+
 Edit `playwright.config.ts`:
+
 ```typescript
 workers: 3,  // Instead of 10
 ```
 
 ### Add More Accounts
+
 Edit `src/test-data/accounts.ts`:
+
 ```typescript
 export const TEST_ACCOUNTS = [
   // ... existing 10 accounts
-  { username: 'testuser10', password: 'Test@1234' },
+  { username: "testuser10", password: "Test@1234" },
 ];
 ```
 
 Then update `playwright.config.ts`:
+
 ```typescript
 workers: 11,  // Max workers = account count
 ```
@@ -117,12 +125,12 @@ workers: 11,  // Max workers = account count
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Session not loading | Delete `.auth/` folder and re-run tests |
-| Login failures | Check internet to practicetestautomation.com |
-| Worker conflicts | Ensure workers ≤ account count |
-| Tests too slow | Increase worker count (max 10) |
+| Issue               | Solution                                     |
+| ------------------- | -------------------------------------------- |
+| Session not loading | Delete `.auth/` folder and re-run tests      |
+| Login failures      | Check internet to practicetestautomation.com |
+| Worker conflicts    | Ensure workers ≤ account count               |
+| Tests too slow      | Increase worker count (max 10)               |
 
 ## Architecture Overview
 

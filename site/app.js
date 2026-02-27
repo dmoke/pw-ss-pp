@@ -73,56 +73,44 @@ class DemoShop {
     if (clearCartBtn) {
       clearCartBtn.addEventListener("click", () => this.clearCart());
     }
+
+    // swagger docs button (only visible to admin)
+    const swaggerBtn = document.getElementById("swagger-btn");
+    if (swaggerBtn) {
+      swaggerBtn.addEventListener("click", () => {
+        window.open("/swagger", "_blank");
+      });
+    }
   }
 
-  handleLogin(e) {
+  async handleLogin(e) {
     e.preventDefault();
 
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
 
-    // Simple authentication - in real app this would be server-side
-    const validUsers = {
-      student: {
-        password: "Password123",
-        role: "student",
-        name: "Student User",
-      },
-      testuser1: {
-        password: "Password123",
-        role: "premium",
-        name: "Premium User 1",
-      },
-      testuser2: {
-        password: "Password123",
-        role: "premium",
-        name: "Premium User 2",
-      },
-      testuser3: { password: "Password123", role: "vip", name: "VIP User 3" },
-      testuser4: { password: "Password123", role: "vip", name: "VIP User 4" },
-      admin: { password: "AdminPass", role: "admin", name: "Administrator" },
-    };
+    try {
+      const resp = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
-    const user = validUsers[username];
-    if (user && user.password === password) {
+      if (!resp.ok) {
+        this.showLoginError("Invalid username or password");
+        return;
+      }
+
+      const { session } = await resp.json();
+
+      // update login count locally for metrics
       this.loginCount++;
       localStorage.setItem("loginCount", this.loginCount.toString());
       console.log(
         `🔐 LOGIN REQUEST #${this.loginCount}: User ${username} logged in`,
       );
 
-      const now = new Date();
-      const expiresAt = new Date(now.getTime() + 30 * 60 * 1000);
-
-      this.currentUser = {
-        username: username,
-        name: user.name,
-        role: user.role,
-        token: `token_${username}_${now.getTime()}`,
-        issuedAt: now.toISOString(),
-        expiresAt: expiresAt.toISOString(),
-        lastLogin: now.toLocaleString(),
-      };
+      this.currentUser = session;
 
       // Store session with token in sessionStorage
       sessionStorage.setItem("session", JSON.stringify(this.currentUser));
@@ -135,8 +123,9 @@ class DemoShop {
 
       this.showDashboard();
       this.clearLoginError();
-    } else {
-      this.showLoginError("Invalid username or password");
+    } catch (err) {
+      console.error("login error", err);
+      this.showLoginError("Unable to reach server");
     }
   }
 
@@ -229,7 +218,7 @@ class DemoShop {
     }
   }
 
-  addRandomItem() {
+  async addRandomItem() {
     const items = [
       { name: "Laptop", price: 999.99 },
       { name: "Mouse", price: 29.99 },
@@ -240,18 +229,53 @@ class DemoShop {
     ];
 
     const randomItem = items[Math.floor(Math.random() * items.length)];
-    this.cart.push({
-      id: Date.now(),
-      ...randomItem,
-    });
+
+    if (this.currentUser && this.currentUser.token) {
+      try {
+        const resp = await fetch("/api/cart", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.currentUser.token}`,
+          },
+          body: JSON.stringify(randomItem),
+        });
+        if (resp.ok) {
+          const body = await resp.json();
+          this.cart = body.cart;
+        }
+      } catch (e) {
+        console.error("cart api error", e);
+      }
+    } else {
+      this.cart.push({
+        id: Date.now(),
+        ...randomItem,
+      });
+    }
 
     this.updateCartDisplay();
     this.saveCart();
   }
 
-  updateCartDisplay() {
+  async updateCartDisplay() {
     const cartContainer = document.getElementById("cart-items");
     const cartTotal = document.getElementById("cart-total");
+
+    // fetch latest from api if logged in
+    if (this.currentUser && this.currentUser.token) {
+      try {
+        const resp = await fetch("/api/cart", {
+          headers: { Authorization: `Bearer ${this.currentUser.token}` },
+        });
+        if (resp.ok) {
+          const body = await resp.json();
+          this.cart = body.cart;
+        }
+      } catch (e) {
+        console.error("cart fetch error", e);
+      }
+    }
 
     if (this.cart.length === 0) {
       cartContainer.innerHTML = "<p>Your cart is empty. Add some items!</p>";

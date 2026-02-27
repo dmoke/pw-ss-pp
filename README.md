@@ -10,7 +10,7 @@ A comprehensive Playwright test automation project with **565 tests** using **se
 ✅ **Round-Robin Assignment** - Worker ID determines which account to use  
 ✅ **Parallel Execution** - Full support for 1-10 workers without conflicts  
 ✅ **TypeScript Ready** - Fully typed with modern TypeScript config  
-✅ **Real Login Testing** - Uses practicetestautomation.com as test website  
+✅ **Real Login Testing** - Uses practicetestautomation.com as test website
 
 ## Project Structure
 
@@ -19,6 +19,8 @@ pw-ss-pp/
 ├── src/
 │   ├── fixtures/
 │   │   └── auth.ts                # Test fixtures (guest, authenticated)
+│   ├── server.js                  # Express-based API server exposing endpoints and swagger UI
+│   ├── tests/api.spec.ts          # Example API tests using Playwright request fixture
 │   └── test-data/
 │       └── accounts.ts            # Test account definitions
 ├── tests/
@@ -42,6 +44,12 @@ npm install
 ```
 
 ### 2. Run Tests
+
+You can exercise the new API demo tests with:
+
+```bash
+npm run test:api        # only the API demo spec (requires server.js)
+```
 
 ```bash
 # Run all tests
@@ -84,13 +92,13 @@ npm run test:report
 
 ```typescript
 // Guest test - no authentication
-test('guest test', async ({ guestPage }) => {
+test("guest test", async ({ guestPage }) => {
   const { page } = guestPage;
-  await page.goto('/login');
+  await page.goto("/login");
 });
 
 // Auth test - auto-loads session from cache
-test('auth test', async ({ authenticatedPage }) => {
+test("auth test", async ({ authenticatedPage }) => {
   const { page, username } = authenticatedPage;
   // Already logged in via session storage
   expect(username).toBeTruthy();
@@ -121,30 +129,33 @@ Worker 10 → Account 0 (student) - wraps around
 ### Test Credentials
 
 All test accounts have valid credentials:
+
 - `student` / `Password123`
 - `testuser1-9` / `Test@1234`
 
 ## Test Coverage
 
 ### Guest Tests (5 tests)
+
 - Page structure validation
 - Login form visibility
 - Error handling for invalid credentials
 
 ### Authenticated Tests (550 tests)
 
-| Suite | Tests | Purpose |
-|-------|-------|---------|
-| Login Validation | 5 | Verify successful login |
-| Session Validation | 5 | Validate session persistence |
-| Content Verification | 10 | Check page content |
-| User Info Validation | 10 | Validate user data |
-| Bulk Test Suite | 120 | Load testing |
-| Load Scenario | 150 | Performance baseline |
-| Stress Test Suite | 200 | High concurrency |
-| Extended Suite | 50 | Extended scenarios |
+| Suite                | Tests | Purpose                      |
+| -------------------- | ----- | ---------------------------- |
+| Login Validation     | 5     | Verify successful login      |
+| Session Validation   | 5     | Validate session persistence |
+| Content Verification | 10    | Check page content           |
+| User Info Validation | 10    | Validate user data           |
+| Bulk Test Suite      | 120   | Load testing                 |
+| Load Scenario        | 150   | Performance baseline         |
+| Stress Test Suite    | 200   | High concurrency             |
+| Extended Suite       | 50    | Extended scenarios           |
 
 ### Session Storage Tests (10 tests)
+
 - Worker session assignment (5 tests)
 - Session storage integration (5 tests)
 
@@ -163,15 +174,17 @@ Max workers = number of accounts (10)
 ### Adding More Accounts
 
 1. Edit `src/test-data/accounts.ts`:
+
 ```typescript
 export const TEST_ACCOUNTS = [
   // ... existing 10 accounts
-  { username: 'testuser10', password: 'Test@1234' },
-  { username: 'testuser11', password: 'Test@1234' },
+  { username: "testuser10", password: "Test@1234" },
+  { username: "testuser11", password: "Test@1234" },
 ];
 ```
 
 2. Update `playwright.config.ts`:
+
 ```typescript
 workers: 12,  // Max workers = account count
 ```
@@ -191,6 +204,7 @@ projects: [
 ## Session Storage Format
 
 `.auth/auth-0.json` (example for account 0):
+
 ```json
 {
   "cookies": [
@@ -221,12 +235,12 @@ projects: [
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Tests can't login | Check credentials in `src/test-data/accounts.ts` |
-| Session expired | Delete `.auth/` folder to force re-login |
-| Worker conflicts | Ensure workers ≤ account count |
-| Session not loading | Check `.auth/` files exist and are readable |
+| Issue               | Solution                                         |
+| ------------------- | ------------------------------------------------ |
+| Tests can't login   | Check credentials in `src/test-data/accounts.ts` |
+| Session expired     | Delete `.auth/` folder to force re-login         |
+| Worker conflicts    | Ensure workers ≤ account count                   |
+| Session not loading | Check `.auth/` files exist and are readable      |
 
 ## Performance Tips
 
@@ -261,12 +275,14 @@ Or in CI, `playwright.config.ts` uses 1 worker by default when `CI=true`.
 ## Architecture Comparison
 
 ### Old Approach (Removed)
+
 - ❌ Manual login/logout per test
 - ❌ File-based account locking
 - ❌ Queue waiting for available accounts
 - ❌ Overhead on every test run
 
 ### New Approach (Current)
+
 - ✅ Session storage-based authentication
 - ✅ Round-robin worker → account mapping
 - ✅ One login per account per session
@@ -288,4 +304,3 @@ Or in CI, `playwright.config.ts` uses 1 worker by default when `CI=true`.
 **Auth Model**: Session Storage (Cookies + LocalStorage)  
 **Max Workers**: 10 (= number of test accounts)  
 **Total Tests**: 565 (5 guest + 550 auth + 5 worker + 5 concurrency)
-

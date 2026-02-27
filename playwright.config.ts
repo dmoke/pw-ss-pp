@@ -22,7 +22,7 @@ export default defineConfig({
   ],
   timeout: 60 * 10 * 1_000 /* 10 min */,
   use: {
-    baseURL: process.env.WEB_URL,
+    baseURL: process.env.WEB_URL || "http://localhost:3000",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     headless: process.env.HEADLESS === "true",
@@ -37,7 +37,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: "npx http-server site -p 3000 -c-1",
+    command: "node server.js",
     port: 3000,
     reuseExistingServer: !process.env.CI,
   },

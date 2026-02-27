@@ -1,12 +1,12 @@
-<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="2.4702970000000204">
-<testsuite name="saleBanner.spec.ts" timestamp="2026-02-27T15:08:26.597Z" hostname="chromium" tests="1" failures="0" skipped="0" time="0.273" errors="0">
-<testcase name="Sale banner handling › banner appears and is closed automatically when interacting" classname="saleBanner.spec.ts" time="0.273">
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="2.433423000000068">
+<testsuite name="saleBanner.spec.ts" timestamp="2026-02-27T15:34:21.426Z" hostname="chromium" tests="1" failures="0" skipped="0" time="0.255" errors="0">
+<testcase name="Sale banner handling › banner appears and is auto-closed via locator handler" classname="saleBanner.spec.ts" time="0.255">
 <system-out>
 <![CDATA[
-[42m[1mINFO[22m[49m[0m[0m	[2m[37m2026-02-27 17:08:27.810[39m[22m[0m[0m  [[2m[37m/C:/Users/38067/dev/pw-ss-pp/hooks/handlers.setup.ts:20[39m[22m[0m[0m[1m[37m[39m[22m[0m[0m]
+[42m[1mINFO[22m[49m[0m[0m	[2m[37m2026-02-27 17:34:22.642[39m[22m[0m[0m  [[2m[37m/C:/Users/38067/dev/pw-ss-pp/hooks/handlers.setup.ts:20[39m[22m[0m[0m[1m[37m[39m[22m[0m[0m]
 [Sale Banner Action]: Found element #saleBanner >> .sale-banner-action >> nth=0 visible and clicking it
 
-[42m[1mINFO[22m[49m[0m[0m	[2m[37m2026-02-27 17:08:27.828[39m[22m[0m[0m  [[2m[37m/C:/Users/38067/dev/pw-ss-pp/hooks/handlers.setup.ts:30[39m[22m[0m[0m[1m[37m[39m[22m[0m[0m]
+[42m[1mINFO[22m[49m[0m[0m	[2m[37m2026-02-27 17:34:22.663[39m[22m[0m[0m  [[2m[37m/C:/Users/38067/dev/pw-ss-pp/hooks/handlers.setup.ts:30[39m[22m[0m[0m[1m[37m[39m[22m[0m[0m]
 [Sale Banner Action]: Element is hidden after click
 ]]>
 </system-out>

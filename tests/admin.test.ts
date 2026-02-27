@@ -1,4 +1,4 @@
-import { test, expect } from "../fixtures/auth.js";
+import { test, expect } from "../fixtures/auth.fixture.js";
 
 // simple smoke test for admin login and browsing capabilities
 

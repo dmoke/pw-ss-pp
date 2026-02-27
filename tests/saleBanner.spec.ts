@@ -1,6 +1,5 @@
 import { expect, test } from "@fixtures/common.fixture.js";
 
-// tests for sale banner that appears every 10 seconds
 
 test.describe("Sale banner handling", () => {
   test("banner appears and is auto-closed via locator handler", async ({

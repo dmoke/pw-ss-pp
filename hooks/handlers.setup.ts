@@ -1,7 +1,7 @@
 import { expect, Locator } from "@playwright/test";
-import { step } from "utils/decorators/index.js";
+import { step } from "@src/utils/decorators/index.js";
 import { Page } from "@playwright/test";
-import { log } from "utils/logger.js";
+import { log } from "@src/utils/logger.js";
 
 class PopupHandler {
   private locator: Locator;

@@ -1,9 +1,13 @@
-<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="3.510335999999894">
-<testsuite name="sessionAuthComparison.spec.ts" timestamp="2026-02-12T18:58:31.024Z" hostname="chromium" tests="1" failures="0" skipped="0" time="1.642" errors="0">
-<testcase name="Session Storage vs Fresh Login Comparison › Fresh Login Approach (no auth reuse) › consistency check" classname="sessionAuthComparison.spec.ts" time="1.642">
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="2.4702970000000204">
+<testsuite name="saleBanner.spec.ts" timestamp="2026-02-27T15:08:26.597Z" hostname="chromium" tests="1" failures="0" skipped="0" time="0.273" errors="0">
+<testcase name="Sale banner handling › banner appears and is closed automatically when interacting" classname="saleBanner.spec.ts" time="0.273">
 <system-out>
-<![CDATA[[FRESH LOGIN] Worker 1: Performing fresh login for testuser1 (no session reuse)
-[FRESH] Worker 0 (testuser1) consistency verified
+<![CDATA[
+[42m[1mINFO[22m[49m[0m[0m	[2m[37m2026-02-27 17:08:27.810[39m[22m[0m[0m  [[2m[37m/C:/Users/38067/dev/pw-ss-pp/hooks/handlers.setup.ts:20[39m[22m[0m[0m[1m[37m[39m[22m[0m[0m]
+[Sale Banner Action]: Found element #saleBanner >> .sale-banner-action >> nth=0 visible and clicking it
+
+[42m[1mINFO[22m[49m[0m[0m	[2m[37m2026-02-27 17:08:27.828[39m[22m[0m[0m  [[2m[37m/C:/Users/38067/dev/pw-ss-pp/hooks/handlers.setup.ts:30[39m[22m[0m[0m[1m[37m[39m[22m[0m[0m]
+[Sale Banner Action]: Element is hidden after click
 ]]>
 </system-out>
 </testcase>

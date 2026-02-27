@@ -1,5 +1,6 @@
 import { test as base, expect } from "@playwright/test";
 import { Pages } from "@src/pages/index.js";
+import { setupLoaderHandlersHook } from "hooks/handlers.setup.js";
 
 interface IFixture {
   calculator: (a: number, b: number) => number;
@@ -18,6 +19,12 @@ export const test = base.extend<IFixture>({
   guestPages: async ({ page }, use) => {
     await use(new Pages(page));
   },
+
+
+  page: async ({ page }, use) => {
+    await setupLoaderHandlersHook(page);
+    await use(page);
+  }
 });
 
 export { expect };

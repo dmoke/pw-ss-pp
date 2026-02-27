@@ -1,93 +1,60 @@
 import { expect, test } from "@fixtures/common.fixture.js";
+import { devices } from "@playwright/test";
 
-await test.beforeEach(async ({}) => {
-  console.log("Running before each...");
+// basic lifecycle hooks used in tutorials
+test.beforeEach(async () => {
+  console.log("beforeEach hook");
 });
 
+test.afterEach(async () => {
+  console.log("afterEach hook");
+});
+
+test.afterAll(async () => {
+  console.log("afterAll hook");
+});
 
 test.describe("Playwright Context Examples", () => {
-  
-  // 1. Browser Context Configuration
-  test("example test with browser context", async ({ page, context }) => {
-    // Configure browser context
-    const browserContext = await context.global().launch({
-      headless: false,
-      slowMo: 1000
+  test("browser context configuration", async ({ browser }) => {
+    const customCtx = await browser.newContext({
+      viewport: { width: 1280, height: 720 },
+      userAgent: "playwright-example",
     });
-
-    // Use the context in tests
-    const page = await browserContext.newPage();
+    const page = await customCtx.newPage();
     await page.goto("https://example.com");
-    await expect(page).toHaveTitle(/Example/);
+    await expect(page).toHaveTitle(/Example Domain/);
+    await customCtx.close();
   });
 
-  // 2. Device Emulation
-  test("test with mobile emulation", async ({ page, context }) => {
-    // Configure mobile emulation
-    const mobileEmulation = {
-      deviceName: 'iPhone 13'
-    };
-
-    // Create context with emulation
-    const mobileContext = await context.global().newContext({
-      emulation: mobileEmulation
+  test("device emulation", async ({ browser }) => {
+    const mobileCtx = await browser.newContext({
+      ...devices["iPhone 13"],
     });
-
-    // Use the mobile context
-    const page = await mobileContext.newPage();
+    const page = await mobileCtx.newPage();
     await page.goto("https://example.com");
+    await mobileCtx.close();
   });
 
-  // 3. Authentication
-  test("test with authentication", async ({ page, context }) => {
-    // Configure context with authentication
-    const authContext = await context.global().newContext({
-      extraHTTPHeaders: { Cookie: 'session=abc123' }
+  test("authentication headers", async ({ browser }) => {
+    const authCtx = await browser.newContext({
+      extraHTTPHeaders: { Cookie: "session=abc123" },
     });
-
-    // Use the authenticated context
-    const page = await authContext.newPage();
+    const page = await authCtx.newPage();
     await page.goto("https://example.com/dashboard");
+    await authCtx.close();
   });
 
-  // 4. Context Reuse
-  test("test with context reuse", async ({ page, context }) => {
-    // Create a shared context
-    const sharedContext = await context.global().newContext();
-
-    // Use the shared context across multiple pages
-    const page1 = await sharedContext.newPage();
-    const page2 = await sharedContext.newPage();
-
-    // Perform actions with both pages
+  test("context reuse across pages", async ({ browser }) => {
+    const shared = await browser.newContext();
+    const p1 = await shared.newPage();
+    const p2 = await shared.newPage();
+    await p1.goto("https://example.com");
+    await p2.goto("https://example.org");
+    await shared.close();
   });
-
-})
-  const context1 = await context.browser().newContext();
-  const context2 = await context.browser().newContext();
-  const page1 = await context1.newPage();
-  
-  // const page3 = context2.off();
-
-  console.log("Running staff in test before using calc");
-
-  const result = calculator(2, 3);
-  expect(result).toBe(5);
 });
 
-test("test pages", async ({ guestPages: { loginPage }, page }) => {
-  await loginPage.navigate();
-
-  expect(page.url()).toBe("http://localhost:3000/");
-});
-
-await test.afterEach(async () => {
-  console.log("Running after each...");
-});
-
-await test.afterAll(async () => {
-  console.log("Running after all...");
-});
+// standalone examples showing a couple of typical page checks
 
 test("Page title is correct", async ({ page }) => {
   await page.goto("/");

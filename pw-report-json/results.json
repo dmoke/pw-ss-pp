@@ -1,7 +1,7 @@
 {
   "config": {
-    "configFile": "C:\\Users\\dmytr\\dev\\bu_PP\\pw-ss-pp\\playwright.config.ts",
-    "rootDir": "C:/Users/dmytr/dev/bu_PP/pw-ss-pp/tests",
+    "configFile": "C:\\Users\\38067\\dev\\pw-ss-pp\\playwright.config.ts",
+    "rootDir": "C:/Users/38067/dev/pw-ss-pp/tests",
     "forbidOnly": false,
     "fullyParallel": true,
     "globalSetup": null,
@@ -16,7 +16,7 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "C:/Users/dmytr/dev/bu_PP/pw-ss-pp/test-results",
+        "outputDir": "C:/Users/38067/dev/pw-ss-pp/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -24,7 +24,7 @@
         },
         "id": "chromium",
         "name": "chromium",
-        "testDir": "C:/Users/dmytr/dev/bu_PP/pw-ss-pp/tests",
+        "testDir": "C:/Users/38067/dev/pw-ss-pp/tests",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -73,67 +73,64 @@
   },
   "suites": [
     {
-      "title": "sessionAuthComparison.spec.ts",
-      "file": "sessionAuthComparison.spec.ts",
+      "title": "saleBanner.spec.ts",
+      "file": "saleBanner.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Session Storage vs Fresh Login Comparison",
-          "file": "sessionAuthComparison.spec.ts",
-          "line": 23,
+          "title": "Sale banner handling",
+          "file": "saleBanner.spec.ts",
+          "line": 5,
           "column": 6,
-          "specs": [],
-          "suites": [
+          "specs": [
             {
-              "title": "Fresh Login Approach (no auth reuse)",
-              "file": "sessionAuthComparison.spec.ts",
-              "line": 63,
-              "column": 8,
-              "specs": [
+              "title": "banner appears and is closed automatically when interacting",
+              "ok": true,
+              "tags": [],
+              "tests": [
                 {
-                  "title": "consistency check",
-                  "ok": true,
-                  "tags": [],
-                  "tests": [
+                  "timeout": 600000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
                     {
-                      "timeout": 600000,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 273,
+                      "errors": [],
+                      "stdout": [
                         {
-                          "workerIndex": 1,
-                          "parallelIndex": 0,
-                          "status": "passed",
-                          "duration": 1642,
-                          "errors": [],
-                          "stdout": [
-                            {
-                              "text": "[FRESH LOGIN] Worker 1: Performing fresh login for testuser1 (no session reuse)\n"
-                            },
-                            {
-                              "text": "[FRESH] Worker 0 (testuser1) consistency verified\n"
-                            }
-                          ],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2026-02-12T18:58:31.807Z",
-                          "annotations": [],
-                          "attachments": []
+                          "text": "\n\u001b[42m\u001b[1mINFO\u001b[22m\u001b[49m\u001b[0m\u001b[0m\t\u001b[2m\u001b[37m2026-02-27 17:08:27.810\u001b[39m\u001b[22m\u001b[0m\u001b[0m  [\u001b[2m\u001b[37m/C:/Users/38067/dev/pw-ss-pp/hooks/handlers.setup.ts:20\u001b[39m\u001b[22m\u001b[0m\u001b[0m\u001b[1m\u001b[37m\u001b[39m\u001b[22m\u001b[0m\u001b[0m]\n[Sale Banner Action]: Found element #saleBanner >> .sale-banner-action >> nth=0 visible and clicking it\n"
+                        },
+                        {
+                          "text": "\n\u001b[42m\u001b[1mINFO\u001b[22m\u001b[49m\u001b[0m\u001b[0m\t\u001b[2m\u001b[37m2026-02-27 17:08:27.828\u001b[39m\u001b[22m\u001b[0m\u001b[0m  [\u001b[2m\u001b[37m/C:/Users/38067/dev/pw-ss-pp/hooks/handlers.setup.ts:30\u001b[39m\u001b[22m\u001b[0m\u001b[0m\u001b[1m\u001b[37m\u001b[39m\u001b[22m\u001b[0m\u001b[0m]\n[Sale Banner Action]: Element is hidden after click\n"
                         }
                       ],
-                      "status": "expected"
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "[PopupHandler] Clicking on Popup element after it found Visible: [\"Sale Banner Action\"]",
+                          "duration": 4
+                        }
+                      ],
+                      "startTime": "2026-02-27T15:08:27.633Z",
+                      "annotations": [],
+                      "attachments": []
                     }
                   ],
-                  "id": "a4633a8cfe6c57381764-abfe3fd4fc88ff8e5abd",
-                  "file": "sessionAuthComparison.spec.ts",
-                  "line": 101,
-                  "column": 5
+                  "status": "expected"
                 }
-              ]
+              ],
+              "id": "17350cbedca077be1ece-4d88ac8b9eca7c5caaee",
+              "file": "saleBanner.spec.ts",
+              "line": 6,
+              "column": 3
             }
           ]
         }
@@ -142,8 +139,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-02-12T18:58:30.158Z",
-    "duration": 3510.335999999894,
+    "startTime": "2026-02-27T15:08:25.528Z",
+    "duration": 2470.2970000000205,
     "expected": 1,
     "skipped": 0,
     "unexpected": 0,

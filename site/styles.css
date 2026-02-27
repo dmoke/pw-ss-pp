@@ -136,6 +136,29 @@ nav {
     margin: 2rem auto;
     padding: 0 20px;
 }
+.sale-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #f1c40f;
+    color: #2c3e50;
+    text-align: center;
+    padding: 1rem;
+    font-weight: bold;
+    z-index: 1000;
+}
+
+.sale-banner:hover {
+    background: #f39c12;
+}
+
+.sale-banner .sale-banner-action {
+    margin-left: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
 
 .dashboard-container h2 {
     color: #2c3e50;

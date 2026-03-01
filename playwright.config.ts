@@ -1,7 +1,9 @@
 import { defineConfig, devices, ReporterDescription } from "@playwright/test";
 import dotenv from "dotenv";
 
+
 if (!process.env.CI) dotenv.config({ path: ".env", override: true });
+dotenv.config({ path: `./config/${process.env.ENVIRONMENT}.env`, override: true });
 
 export default defineConfig({
   testDir: "./tests",
@@ -22,7 +24,7 @@ export default defineConfig({
   ],
   timeout: 60 * 10 * 1_000 /* 10 min */,
   use: {
-    baseURL: process.env.WEB_URL || "http://localhost:3000",
+    baseURL: process.env.WEB_URL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     headless: process.env.HEADLESS === "true",

@@ -59,7 +59,6 @@ export async function setupLoaderHandlersHook(page: Page) {
 
   // const mobileAppBannerCloseBtn = page.locator('[data-role="mobile-app-banner-close"]');
   // const iconNotificationClose = page.locator('[data-role="icon-notification-close"]:not([class*=VerificationStatusNotification])');
-  // const favbetBannerCloseBtn = page.locator('div[class*=AppBanner] svg');
 
   // const internalPopupCloseBtn = page.locator('[class="ao-close ao-text-white"]');
   // const animazePopupCloseBtn = internalPopupCloseBtn;
@@ -115,10 +114,6 @@ export async function setupLoaderHandlersHook(page: Page) {
 
   // await page.addLocatorHandler(internalPopupCloseBtn, async () => {
   //   await popupHandler.performClick(internalPopupCloseBtn, 'Internal Popup Close');
-  // });
-
-  // await page.addLocatorHandler(favbetBannerCloseBtn, async () => {
-  //   await popupHandler.performClick(favbetBannerCloseBtn, 'Favbet Banner Close');
   // });
 
   // await page.addLocatorHandler(termsAndConditionsAcceptBtn, async () => {

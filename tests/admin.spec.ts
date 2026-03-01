@@ -21,6 +21,7 @@ test.describe("Administrator login & navigation", () => {
 
     // admin should be able to interact with the site like other users
     await page.click("#add-item-btn");
+    await page.waitForTimeout(500);
     const cartTotal = await page.textContent("#cart-total");
     expect(cartTotal).not.toBe("Total: $0.00");
 

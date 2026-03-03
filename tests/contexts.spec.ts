@@ -1,7 +1,6 @@
 import { expect, test } from "@fixtures/common.fixture.js";
 import { devices } from "@playwright/test";
 
-// basic lifecycle hooks used in tutorials
 test.beforeEach(async () => {
   console.log("beforeEach hook");
 });
@@ -54,21 +53,16 @@ test.describe("Playwright Context Examples", () => {
   });
 });
 
-// standalone examples showing a couple of typical page checks
-
-// illustrate creating several contexts within a single test body
 test("multiple contexts in one test", async ({ browser }) => {
   const ctx1 = await browser.newContext();
   const page1 = await ctx1.newPage();
   await page1.goto("/", { waitUntil: "domcontentloaded" });
-  // await expect(page1).toHaveTitle(/Welcome to Playwright/);
 
   const ctx2 = await browser.newContext({
     viewport: { width: 320, height: 480 },
   });
   const page2 = await ctx2.newPage();
   await page2.goto("https://example.com");
-  // await expect(page2).toHaveTitle(/Example Domain/);
 
   await ctx1.close();
   await ctx2.close();

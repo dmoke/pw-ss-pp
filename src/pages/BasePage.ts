@@ -1,4 +1,5 @@
 import { Page } from "@playwright/test";
+import { step } from "@src/utils/decorators/index.js";
 
 export abstract class BasePage {
   protected path = "";
@@ -11,6 +12,7 @@ export abstract class BasePage {
     this.username = username;
   }
 
+  @step()
   async navigate() {
     await this.page.goto(this.path, { waitUntil: "domcontentloaded" });
     await this.page.waitForTimeout(1_000);

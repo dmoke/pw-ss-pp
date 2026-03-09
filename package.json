@@ -13,7 +13,7 @@
     "test:guest": "playwright test tests/guest.spec.ts",
     "test:concurrency": "playwright test tests/concurrency.spec.ts",
     "test:api": "playwright test tests/api.spec.ts",
-    "test:report": "playwright show-report",
+    "test:report": "playwright show-report pw-report-html",
     "start": "node server.js",
     "stop": "npx kill-port 3000"
   },

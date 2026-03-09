@@ -1,6 +1,7 @@
 import { test as base, expect, Page, request } from "@playwright/test";
 import { APIManager } from "@src/api/APIManager.js";
 import { Pages } from "@src/pages/index.js";
+import { MockService } from "@src/utils/mock-service.js";
 import { setupLoaderHandlersHook } from "hooks/handlers.setup.js";
 
 interface IFixture {
@@ -8,6 +9,7 @@ interface IFixture {
   guestPages: Pages;
   nohandlerpage: Page;
   disableHandlers: boolean;
+  mockService: MockService;
   apiManager: APIManager;
 }
 
@@ -34,23 +36,31 @@ export const test = base.extend<IFixture>({
   },
 
   nohandlerpage: async ({ page }, use) => {
-    // explicit alias for page without handlers; behaves same as page but handler setup is skipped
     await use(page);
   },
 
-  
+  mockService: async ({ page, baseURL }, use) => {
+    const mockingService = new MockService(page, baseURL);
+
+    await use(mockingService);
+
+    if (mockingService.getRules().length > 0) {
+      await mockingService.generateAndAttachReport();
+    }
+  },
+
   apiManager: async ({ baseURL }, use) => {
     const cookies = [
       {
-        name: 'isAutomationTestRun',
-        value: 'true',
+        name: "isAutomationTestRun",
+        value: "true",
         url: process.env.WEB_API,
         domain: new URL(baseURL).hostname,
-        path: '/',
+        path: "/",
         expires: Math.floor(Date.now() / 1000) + 36000,
         httpOnly: false,
         secure: true,
-        sameSite: 'Lax' as const,
+        sameSite: "Lax" as const,
       },
     ];
 

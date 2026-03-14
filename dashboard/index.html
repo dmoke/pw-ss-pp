@@ -1,1171 +1,1445 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Playwright Test Dashboard</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .header h1 {
-            font-size: 28px;
-            font-weight: 600;
-        }
-
-        .header-status {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .status-badge {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            font-size: 14px;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #4ade80;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
-
-            100% {
-                opacity: 1;
-            }
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 300px 1fr;
-            gap: 0;
-            min-height: 600px;
-        }
-
-        .sidebar {
-            background: #f8f9fa;
-            border-right: 1px solid #e0e0e0;
-            padding: 20px;
-            overflow-y: auto;
-            max-height: calc(100vh - 200px);
-        }
-
-        .sidebar h2 {
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: #666;
-            margin-bottom: 15px;
-        }
-
-        .spec-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 30px;
-        }
-
-        .spec-item {
-            padding: 10px 12px;
-            background: white;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-            user-select: none;
-        }
-
-        .spec-item:hover {
-            border-color: #667eea;
-            background: #f0f2ff;
-        }
-
-        .spec-item.selected {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        .run-button {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: opacity 0.2s;
-            font-size: 14px;
-        }
-
-        .run-button:hover {
-            opacity: 0.9;
-        }
-
-        .run-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .content {
-            padding: 30px;
-            overflow-y: auto;
-            max-height: calc(100vh - 200px);
-        }
-
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 15px;
-            flex-wrap: wrap;
-        }
-
-        .tab {
-            padding: 10px 16px;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            color: #999;
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .tab:hover {
-            color: #666;
-        }
-
-        .tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-        }
-
-        .run-queue {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .run-card {
-            background: #f8f9fa;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 16px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .run-card:hover {
-            border-color: #667eea;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
-        }
-
-        .run-card.expanded {
-            border-color: #667eea;
-            background: white;
-        }
-
-        .run-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-            margin-bottom: 10px;
-        }
-
-        .run-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-            min-width: 0;
-        }
-
-        .run-status-badge {
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-            white-space: nowrap;
-            text-transform: uppercase;
-        }
-
-        .run-status-badge.queued {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .run-status-badge.running {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        .run-status-badge.passed {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .run-status-badge.failed {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .run-meta {
-            font-size: 12px;
-            color: #999;
-            margin-top: 8px;
-        }
-
-        .stdout-container {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 12px;
-            border-radius: 4px;
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-size: 12px;
-            line-height: 1.5;
-            max-height: 400px;
-            overflow-y: auto;
-            margin-top: 12px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            border: 2px solid #667eea;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-
-        .k8s-section {
-            margin-bottom: 30px;
-        }
-
-        .queue-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 12px;
-            margin-bottom: 25px;
-        }
-
-        .queue-stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 16px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .queue-stat-number {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .queue-stat-label {
-            font-size: 12px;
-            opacity: 0.9;
-        }
-
-        .queue-stack {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .queue-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 14px;
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .queue-timeline {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex: 1;
-        }
-
-        .timeline-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            position: relative;
-        }
-
-        .timeline-dot.queued {
-            background: #fbbf24;
-        }
-
-        .timeline-dot.pending {
-            background: #f59e0b;
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-
-        .timeline-dot.running {
-            background: #3b82f6;
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-
-        .timeline-dot.succeeded {
-            background: #10b981;
-        }
-
-        .timeline-dot.failed {
-            background: #ef4444;
-        }
-
-        .timeline-connector {
-            width: 8px;
-            height: 2px;
-            background: #e0e0e0;
-        }
-
-        .queue-tooltip {
-            position: relative;
-            display: inline-block;
-            font-size: 11px;
-            color: #666;
-            font-weight: 500;
-            white-space: nowrap;
-        }
-
-        .queue-tooltip:hover::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: white;
-            padding: 6px 10px;
-            border-radius: 4px;
-            font-size: 11px;
-            white-space: nowrap;
-            z-index: 100;
-            pointer-events: none;
-        }
-
-        .queue-tooltip:hover::before {
-            content: '';
-            position: absolute;
-            bottom: 120%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 4px solid transparent;
-            border-top-color: #333;
-            z-index: 100;
-            pointer-events: none;
-        }
-
-        .k8s-section h3 {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: #333;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-
-        table th {
-            background: #f8f9fa;
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-            border-bottom: 2px solid #e0e0e0;
-        }
-
-        table td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        table tr:hover {
-            background: #f8f9fa;
-        }
-
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 32px;
-            font-weight: 600;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            opacity: 0.8;
-            margin-top: 8px;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .header h1 {
+        font-size: 28px;
+        font-weight: 600;
+      }
+
+      .header-status {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+
+      .status-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        font-size: 14px;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #4ade80;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+        }
+
+        50% {
+          opacity: 0.5;
+        }
+
+        100% {
+          opacity: 1;
+        }
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .main-content {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 0;
+        min-height: 600px;
+      }
+
+      .sidebar {
+        background: #f8f9fa;
+        border-right: 1px solid #e0e0e0;
+        padding: 20px;
+        overflow-y: auto;
+        max-height: calc(100vh - 200px);
+      }
+
+      .sidebar h2 {
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #666;
+        margin-bottom: 15px;
+      }
+
+      .spec-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 30px;
+      }
+
+      .spec-item {
+        padding: 10px 12px;
+        background: white;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        user-select: none;
+      }
+
+      .spec-item:hover {
+        border-color: #667eea;
+        background: #f0f2ff;
+      }
+
+      .spec-item.selected {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+      }
+
+      .run-button {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s;
+        font-size: 14px;
+      }
+
+      .run-button:hover {
+        opacity: 0.9;
+      }
+
+      .run-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .content {
+        padding: 30px;
+        overflow-y: auto;
+        max-height: calc(100vh - 200px);
+      }
+
+      .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #e0e0e0;
+        padding-bottom: 15px;
+        flex-wrap: wrap;
+      }
+
+      .tab {
+        padding: 10px 16px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        color: #999;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+      }
+
+      .tab:hover {
+        color: #666;
+      }
+
+      .tab.active {
+        color: #667eea;
+        border-bottom-color: #667eea;
+      }
+
+      .run-queue {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .run-card {
+        background: #f8f9fa;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .run-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+      }
+
+      .run-card.expanded {
+        border-color: #667eea;
+        background: white;
+      }
+
+      .run-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        margin-bottom: 10px;
+      }
+
+      .run-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .run-status-badge {
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+        text-transform: uppercase;
+      }
+
+      .run-status-badge.queued {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .run-status-badge.running {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
+      .run-status-badge.passed {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .run-status-badge.failed {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .run-meta {
+        font-size: 12px;
+        color: #999;
+        margin-top: 8px;
+      }
+
+      .stdout-container {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 12px;
+        border-radius: 4px;
+        font-family: "Monaco", "Menlo", monospace;
+        font-size: 12px;
+        line-height: 1.5;
+        max-height: 400px;
+        overflow-y: auto;
+        margin-top: 12px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      .spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #667eea;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #999;
+      }
+
+      .k8s-section {
+        margin-bottom: 30px;
+      }
+
+      .queue-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 12px;
+        margin-bottom: 25px;
+      }
+
+      .queue-stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 16px;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .queue-stat-number {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+
+      .queue-stat-label {
+        font-size: 12px;
+        opacity: 0.9;
+      }
+
+      .queue-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .queue-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        animation: slideIn 0.3s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(-10px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .queue-timeline {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex: 1;
+      }
+
+      .timeline-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        position: relative;
+      }
+
+      .timeline-dot.queued {
+        background: #fbbf24;
+      }
+
+      .timeline-dot.pending {
+        background: #f59e0b;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      .timeline-dot.running {
+        background: #3b82f6;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      .timeline-dot.succeeded {
+        background: #10b981;
+      }
+
+      .timeline-dot.failed {
+        background: #ef4444;
+      }
+
+      .timeline-connector {
+        width: 8px;
+        height: 2px;
+        background: #e0e0e0;
+      }
+
+      .queue-tooltip {
+        position: relative;
+        display: inline-block;
+        font-size: 11px;
+        color: #666;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      .queue-tooltip:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: white;
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        white-space: nowrap;
+        z-index: 100;
+        pointer-events: none;
+      }
+
+      .queue-tooltip:hover::before {
+        content: "";
+        position: absolute;
+        bottom: 120%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 4px solid transparent;
+        border-top-color: #333;
+        z-index: 100;
+        pointer-events: none;
+      }
+
+      .k8s-section h3 {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #333;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      table th {
+        background: #f8f9fa;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid #e0e0e0;
+      }
+
+      table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      table tr:hover {
+        background: #f8f9fa;
+      }
+
+      .stats-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-bottom: 30px;
+      }
+
+      .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 32px;
+        font-weight: 600;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        opacity: 0.8;
+        margin-top: 8px;
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <div id="root"></div>
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+      const { useState, useEffect, useRef } = React;
 
-        function Dashboard() {
-            const [specs, setSpecs] = useState([]);
-            const [selectedSpecs, setSelectedSpecs] = useState(new Set());
-            const [queue, setQueue] = useState([]);
-            const [activeTab, setActiveTab] = useState('queue');
-            const [expandedRun, setExpandedRun] = useState(null);
-            const [reportRunId, setReportRunId] = useState(null);
-            const [k8sPods, setK8sPods] = useState([]);
-            const [k8sJobs, setK8sJobs] = useState([]);
-            const [containers, setContainers] = useState([]);
-            const [loading, setLoading] = useState(true);
+      function Dashboard() {
+        const [specs, setSpecs] = useState([]);
+        const [selectedSpecs, setSelectedSpecs] = useState(new Set());
+        const [queue, setQueue] = useState([]);
+        const [activeTab, setActiveTab] = useState("queue");
+        const [expandedRun, setExpandedRun] = useState(null);
+        const [reportRunId, setReportRunId] = useState(null);
+        const [k8sPods, setK8sPods] = useState([]);
+        const [k8sJobs, setK8sJobs] = useState([]);
+        const [containers, setContainers] = useState([]);
+        const [loading, setLoading] = useState(true);
 
-            const API_URL = window.location.hostname === 'localhost'
-                ? 'http://localhost:4000/api/dashboard'
-                : 'http://172.19.0.20:4000/api/dashboard';
+        const API_URL =
+          window.location.hostname === "localhost"
+            ? "http://localhost:4000/api/dashboard"
+            : "http://172.19.0.20:4000/api/dashboard";
 
-            // Fetch specs on load
-            useEffect(() => {
-                fetch(`${API_URL}/specs`)
-                    .then(r => r.json())
-                    .then(data => {
-                        setSpecs(data.specs || []);
-                        setLoading(false);
-                    })
-                    .catch(err => {
-                        console.error('Error fetching specs:', err);
-                        setLoading(false);
-                    });
-            }, []);
+        // Fetch specs on load
+        useEffect(() => {
+          fetch(`${API_URL}/specs`)
+            .then((r) => r.json())
+            .then((data) => {
+              setSpecs(data.specs || []);
+              setLoading(false);
+            })
+            .catch((err) => {
+              console.error("Error fetching specs:", err);
+              setLoading(false);
+            });
+        }, []);
 
-            // WebSocket connection
-            useEffect(() => {
-                const wsUrl = window.location.hostname === 'localhost'
-                    ? 'ws://localhost:4000/api/dashboard/stream'
-                    : 'ws://172.19.0.20:4000/api/dashboard/stream';
+        // WebSocket connection
+        useEffect(() => {
+          const wsUrl =
+            window.location.hostname === "localhost"
+              ? "ws://localhost:4000/api/dashboard/stream"
+              : "ws://172.19.0.20:4000/api/dashboard/stream";
 
-                console.log('Connecting to WebSocket:', wsUrl);
-                const ws = new WebSocket(wsUrl);
+          console.log("Connecting to WebSocket:", wsUrl);
+          const ws = new WebSocket(wsUrl);
 
-                ws.onopen = () => {
-                    console.log('WebSocket connected');
-                };
+          ws.onopen = () => {
+            console.log("WebSocket connected");
+          };
 
-                ws.onmessage = (event) => {
-                    const data = JSON.parse(event.data);
-                    console.log('WS message received:', data.type, data.queue?.length);
+          ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log("WS message received:", data.type, data.queue?.length);
 
-                    if (data.type === 'queue') {
-                        setQueue(data.queue || []);
-                    } else if (data.type === 'containers') {
-                        setContainers(data.containers || []);
-                    } else if (data.type === 'k8s') {
-                        setK8sPods(data.pods || []);
-                        setK8sJobs(data.jobs || []);
-                    }
-                };
-
-                ws.onerror = (err) => {
-                    console.error('WebSocket error:', err);
-                };
-
-                ws.onclose = () => {
-                    console.log('WebSocket closed');
-                };
-
-                return () => ws.close();
-            }, []);
-
-            const toggleSpec = (id) => {
-                const newSelected = new Set(selectedSpecs);
-                if (newSelected.has(id)) {
-                    newSelected.delete(id);
-                } else {
-                    newSelected.add(id);
-                }
-                setSelectedSpecs(newSelected);
-            };
-
-            const runTests = async () => {
-                if (selectedSpecs.size === 0) {
-                    alert('Please select at least one test spec');
-                    return;
-                }
-
-                const specPaths = specs
-                    .filter(s => selectedSpecs.has(s.id))
-                    .map(s => s.path);
-
-                for (const specPath of specPaths) {
-                    try {
-                        await fetch(`${API_URL}/run`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ specPath })
-                        });
-                    } catch (err) {
-                        console.error('Error running test:', err);
-                    }
-                }
-
-                setActiveTab('queue');
-            };
-
-            const calculateStats = () => {
-                const total = queue.filter(r => r.status !== 'queued').length;
-                const passed = queue.filter(r => r.status === 'passed').length;
-                const failed = queue.filter(r => r.status === 'failed').length;
-                return { total, passed, failed };
-            };
-
-            const getPodPhaseColor = (phase) => {
-                switch (phase) {
-                    case 'Pending': return '#f59e0b';
-                    case 'Running': return '#3b82f6';
-                    case 'Succeeded': return '#10b981';
-                    case 'Failed': return '#ef4444';
-                    default: return '#e0e0e0';
-                }
-            };
-
-            const getQueuePhaseSequence = (run) => {
-                const phases = ['Queued'];
-                if (run.status === 'queued') {
-                    return phases;
-                }
-                phases.push(run.podPhase || 'Running');
-                if (run.status === 'passed' || run.status === 'failed') {
-                    phases.push(run.status === 'passed' ? 'Succeeded' : 'Failed');
-                }
-                return phases;
-            };
-
-            const getPhaseTooltip = (phase) => {
-                const tooltips = {
-                    'Queued': 'Test waiting for pod allocation',
-                    'Pending': 'Kubernetes allocating resources',
-                    'Running': 'Test executing in pod',
-                    'Succeeded': 'Test passed, pod cleaning up',
-                    'Failed': 'Test failed or pod error'
-                };
-                return tooltips[phase] || phase;
-            };
-
-            const stats = calculateStats();
-
-            if (loading) {
-                return (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-                        <div style={{ color: 'white', textAlign: 'center' }}>
-                            <div className="spinner" style={{ marginBottom: '20px', borderColor: 'white', borderTopColor: 'transparent' }}></div>
-                            <p>Loading dashboard...</p>
-                        </div>
-                    </div>
-                );
+            if (data.type === "queue") {
+              setQueue(data.queue || []);
+            } else if (data.type === "containers") {
+              setContainers(data.containers || []);
+            } else if (data.type === "k8s") {
+              setK8sPods(data.pods || []);
+              setK8sJobs(data.jobs || []);
             }
+          };
 
-            return (
-                <div className="container">
-                    <div className="header">
-                        <h1>🧪 Test Dashboard</h1>
-                        <div className="header-status">
-                            <div className="status-badge">
-                                <div className="status-dot"></div>
-                                <span>System Online</span>
-                            </div>
-                            <div className="status-badge">
-                                <span>{specs.length} Test Specs</span>
-                            </div>
-                            <div className="status-badge">
-                                <span>{queue.length} Runs</span>
-                            </div>
-                        </div>
-                    </div>
+          ws.onerror = (err) => {
+            console.error("WebSocket error:", err);
+          };
 
-                    <div className="main-content">
-                        <div className="sidebar">
-                            <h2>📋 Test Specs</h2>
-                            <div className="spec-list">
-                                {specs.map(spec => (
-                                    <div
-                                        key={spec.id}
-                                        className={`spec-item ${selectedSpecs.has(spec.id) ? 'selected' : ''}`}
-                                        onClick={() => toggleSpec(spec.id)}
-                                    >
-                                        {spec.id}
-                                    </div>
-                                ))}
-                            </div>
+          ws.onclose = () => {
+            console.log("WebSocket closed");
+          };
 
-                            <button
-                                className="run-button"
-                                onClick={runTests}
-                                disabled={selectedSpecs.size === 0}
-                            >
-                                ▶️ Run Tests ({selectedSpecs.size})
-                            </button>
-                        </div>
+          return () => ws.close();
+        }, []);
 
-                        <div className="content">
-                            {stats.total > 0 && (
-                                <div className="stats-row">
-                                    <div className="stat-card">
-                                        <div className="stat-value">{stats.total}</div>
-                                        <div className="stat-label">Total Tests</div>
-                                    </div>
-                                    <div className="stat-card">
-                                        <div className="stat-value" style={{ color: '#4ade80' }}>{stats.passed}</div>
-                                        <div className="stat-label">Passed</div>
-                                    </div>
-                                    <div className="stat-card">
-                                        <div className="stat-value" style={{ color: '#ff6b6b' }}>{stats.failed}</div>
-                                        <div className="stat-label">Failed</div>
-                                    </div>
-                                </div>
-                            )}
+        const toggleSpec = (id) => {
+          const newSelected = new Set(selectedSpecs);
+          if (newSelected.has(id)) {
+            newSelected.delete(id);
+          } else {
+            newSelected.add(id);
+          }
+          setSelectedSpecs(newSelected);
+        };
 
-                            <div className="tabs">
-                                <button
-                                    className={`tab ${activeTab === 'queue' ? 'active' : ''}`}
-                                    onClick={() => setActiveTab('queue')}
-                                >
-                                    Queue ({queue.filter(r => r.status !== 'queued').length})
-                                </button>
-                                <button
-                                    className={`tab ${activeTab === 'history' ? 'active' : ''}`}
-                                    onClick={() => setActiveTab('history')}
-                                >
-                                    History ({queue.length})
-                                </button>
-                                <button
-                                    className={`tab ${activeTab === 'report' ? 'active' : ''}`}
-                                    onClick={() => setActiveTab('report')}
-                                >
-                                    📊 Report
-                                </button>
-                                <button
-                                    className={`tab ${activeTab === 'containers' ? 'active' : ''}`}
-                                    onClick={() => setActiveTab('containers')}
-                                >
-                                    🐳 Containers
-                                </button>
-                                <button
-                                    className={`tab ${activeTab === 'k8s' ? 'active' : ''}`}
-                                    onClick={() => setActiveTab('k8s')}
-                                >
-                                    ☸️ Kubernetes
-                                </button>
-                            </div>
+        const runTests = async () => {
+          if (selectedSpecs.size === 0) {
+            alert("Please select at least one test spec");
+            return;
+          }
 
-                            {activeTab === 'queue' && (
-                                <div>
-                                    {queue.filter(r => r.status !== 'queued').length === 0 ? (
-                                        <div className="empty-state">
-                                            <div>No running or completed tests</div>
-                                            <div style={{ fontSize: '12px', marginTop: '10px' }}>Select specs and click "Run Tests" to start</div>
-                                        </div>
-                                    ) : (
-                                        <div className="run-queue">
-                                            {queue.filter(r => r.status !== 'queued').map(run => (
-                                                <div
-                                                    key={run.runId}
-                                                    className={`run-card ${expandedRun === run.runId ? 'expanded' : ''}`}
-                                                    onClick={() => setExpandedRun(expandedRun === run.runId ? null : run.runId)}
-                                                >
-                                                    <div className="run-header">
-                                                        <div className="run-title">
-                                                            {run.status === 'running' && <div className="spinner"></div>}
-                                                            <span style={{ fontWeight: '600' }}>{run.spec}</span>
-                                                            <span className={`run-status-badge ${run.status}`}>
-                                                                {run.status}
-                                                            </span>
-                                                        </div>
-                                                        <span style={{ fontSize: '12px', color: '#999' }}>
-                                                            {run.completedAt
-                                                                ? `${(new Date(run.completedAt) - new Date(run.startedAt)) / 1000}s`
-                                                                : run.startedAt
-                                                                    ? `${Math.floor((Date.now() - new Date(run.startedAt)) / 1000)}s`
-                                                                    : '-'
-                                                            }
-                                                        </span>
-                                                    </div>
+          const specPaths = specs
+            .filter((s) => selectedSpecs.has(s.id))
+            .map((s) => s.path);
 
-                                                    <div className="run-meta">
-                                                        {run.startedAt && new Date(run.startedAt).toLocaleTimeString()}
-                                                    </div>
+          for (const specPath of specPaths) {
+            try {
+              await fetch(`${API_URL}/run`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ specPath }),
+              });
+            } catch (err) {
+              console.error("Error running test:", err);
+            }
+          }
 
-                                                    {expandedRun === run.runId && run.stdout && (
-                                                        <div className="stdout-container">
-                                                            {run.stdout.replace(/\x1b\[[0-9;]*m/g, '')}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+          setActiveTab("queue");
+        };
 
-                            {activeTab === 'history' && (
-                                <div>
-                                    {queue.length === 0 ? (
-                                        <div className="empty-state">
-                                            <div>No test runs yet</div>
-                                        </div>
-                                    ) : (
-                                        <div className="run-queue">
-                                            {queue.map(run => (
-                                                <div
-                                                    key={run.runId}
-                                                    className={`run-card ${expandedRun === run.runId ? 'expanded' : ''}`}
-                                                    onClick={() => setExpandedRun(expandedRun === run.runId ? null : run.runId)}
-                                                >
-                                                    <div className="run-header">
-                                                        <div className="run-title">
-                                                            {run.status === 'running' && <div className="spinner"></div>}
-                                                            <span style={{ fontWeight: '600' }}>{run.spec}</span>
-                                                            <span className={`run-status-badge ${run.status}`}>
-                                                                {run.status}
-                                                            </span>
-                                                        </div>
-                                                        <span style={{ fontSize: '12px', color: '#999' }}>
-                                                            {run.completedAt
-                                                                ? `${(new Date(run.completedAt) - new Date(run.startedAt)) / 1000}s`
-                                                                : run.startedAt
-                                                                    ? `${Math.floor((Date.now() - new Date(run.startedAt)) / 1000)}s`
-                                                                    : '-'
-                                                            }
-                                                        </span>
-                                                    </div>
+        const calculateStats = () => {
+          const total = queue.filter((r) => r.status !== "queued").length;
+          const passed = queue.filter((r) => r.status === "passed").length;
+          const failed = queue.filter((r) => r.status === "failed").length;
+          return { total, passed, failed };
+        };
 
-                                                    <div className="run-meta">
-                                                        {run.startedAt && new Date(run.startedAt).toLocaleTimeString()}
-                                                        {(run.status === 'passed' || run.status === 'failed') && run.completedAt && (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setReportRunId(run.runId);
-                                                                    setActiveTab('report');
-                                                                }}
-                                                                style={{
-                                                                    marginLeft: '12px',
-                                                                    padding: '4px 12px',
-                                                                    background: run.status === 'failed' ? '#ff6b6b' : '#667eea',
-                                                                    color: 'white',
-                                                                    border: 'none',
-                                                                    borderRadius: '4px',
-                                                                    fontSize: '11px',
-                                                                    cursor: 'pointer',
-                                                                    fontWeight: '500'
-                                                                }}
-                                                            >
-                                                                📊 View Report
-                                                            </button>
-                                                        )}
-                                                    </div>
+        const getPodPhaseColor = (phase) => {
+          switch (phase) {
+            case "Pending":
+              return "#f59e0b";
+            case "Running":
+              return "#3b82f6";
+            case "Succeeded":
+              return "#10b981";
+            case "Failed":
+              return "#ef4444";
+            default:
+              return "#e0e0e0";
+          }
+        };
 
-                                                    {expandedRun === run.runId && run.stdout && (
-                                                        <div className="stdout-container">
-                                                            {run.stdout.replace(/\x1b\[[0-9;]*m/g, '')}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+        const getQueuePhaseSequence = (run) => {
+          const phases = ["Queued"];
+          if (run.status === "queued") {
+            return phases;
+          }
+          phases.push(run.podPhase || "Running");
+          if (run.status === "passed" || run.status === "failed") {
+            phases.push(run.status === "passed" ? "Succeeded" : "Failed");
+          }
+          return phases;
+        };
 
-                            {activeTab === 'report' && (
-                                <div>
-                                    {!reportRunId ? (
-                                        <div className="empty-state">
-                                            <div>📊 No report selected</div>
-                                            <div style={{ fontSize: '12px', marginTop: '10px' }}>
-                                                Click "View Report" on a passed test in the History tab
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div>
-                                            <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <p style={{ fontSize: '13px', color: '#666' }}>
-                                                    📊 Report for: <strong>{queue.find(r => r.runId === reportRunId)?.spec}</strong>
-                                                </p>
-                                                <button
-                                                    onClick={() => setReportRunId(null)}
-                                                    style={{
-                                                        padding: '4px 12px',
-                                                        background: '#f0f0f0',
-                                                        border: '1px solid #e0e0e0',
-                                                        borderRadius: '4px',
-                                                        fontSize: '12px',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    ✕ Close
-                                                </button>
-                                            </div>
-                                            <iframe
-                                                src={`${API_URL}/report?runId=${reportRunId}`}
-                                                style={{
-                                                    width: '100%',
-                                                    height: '800px',
-                                                    border: '1px solid #e0e0e0',
-                                                    borderRadius: '8px'
-                                                }}
-                                                title="Playwright Report"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+        const getPhaseTooltip = (phase) => {
+          const tooltips = {
+            Queued: "Test waiting for pod allocation",
+            Pending: "Kubernetes allocating resources",
+            Running: "Test executing in pod",
+            Succeeded: "Test passed, pod cleaning up",
+            Failed: "Test failed or pod error",
+          };
+          return tooltips[phase] || phase;
+        };
 
-                            {activeTab === 'containers' && (
-                                <div>
-                                    {containers.length === 0 ? (
-                                        <div className="empty-state">No containers running</div>
-                                    ) : (
-                                        <table>
-                                            <thead>
-                                                <tr>
-                                                    <th>Name</th>
-                                                    <th>State</th>
-                                                    <th>Status</th>
-                                                    <th>Ports</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {containers.map(c => (
-                                                    <tr key={c.id}>
-                                                        <td>{c.name}</td>
-                                                        <td>{c.state}</td>
-                                                        <td>{c.status}</td>
-                                                        <td>{c.ports.join(', ')}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    )}
-                                </div>
-                            )}
+        const stats = calculateStats();
 
-                            {activeTab === 'k8s' && (
-                                <div>
-                                    <div className="k8s-section">
-                                        <h3>📊 Queue & Scaling Monitor</h3>
-                                        <p style={{ fontSize: '12px', color: '#666', marginBottom: '16px' }}>
-                                            Real-time view of test queue and Kubernetes pod scaling
-                                        </p>
-
-                                        <div className="queue-stats">
-                                            <div className="queue-stat-card" style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)' }}>
-                                                <div className="queue-stat-number">{queue.filter(r => r.status === 'queued').length}</div>
-                                                <div className="queue-stat-label">Queued</div>
-                                            </div>
-                                            <div className="queue-stat-card" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)' }}>
-                                                <div className="queue-stat-number">{queue.filter(r => r.status === 'running' || r.podPhase === 'Running').length}</div>
-                                                <div className="queue-stat-label">Running Pods</div>
-                                            </div>
-                                            <div className="queue-stat-card" style={{ background: 'linear-gradient(135deg, #10b981 0%, #047857 100%)' }}>
-                                                <div className="queue-stat-number">{queue.filter(r => r.status === 'passed').length}</div>
-                                                <div className="queue-stat-label">Succeeded</div>
-                                            </div>
-                                            <div className="queue-stat-card" style={{ background: 'linear-gradient(135deg, #ef4444 0%, #991b1b 100%)' }}>
-                                                <div className="queue-stat-number">{queue.filter(r => r.status === 'failed').length}</div>
-                                                <div className="queue-stat-label">Failed</div>
-                                            </div>
-                                        </div>
-
-                                        {queue.filter(r => r.k8sJobName).length > 0 && (
-                                            <div style={{ marginBottom: '30px' }}>
-                                                <h4 style={{ fontSize: '13px', fontWeight: '600', marginBottom: '12px', color: '#333' }}>Test Timeline</h4>
-                                                <div className="queue-stack">
-                                                    {queue.filter(r => r.k8sJobName).map(run => {
-                                                        const phases = getQueuePhaseSequence(run);
-                                                        let currentPhaseIdx = 0;
-                                                        if (run.status === 'queued') {
-                                                            currentPhaseIdx = 0;
-                                                        } else if (run.status === 'passed' || run.status === 'failed') {
-                                                            currentPhaseIdx = phases.length - 1;
-                                                        } else if (run.podPhase === 'Pending') {
-                                                            currentPhaseIdx = 1;
-                                                        } else if (run.podPhase === 'Running') {
-                                                            currentPhaseIdx = 1;
-                                                        }
-
-                                                        return (
-                                                            <div key={run.runId} className="queue-item">
-                                                                <div style={{ minWidth: '80px', fontWeight: '500', fontSize: '12px', color: '#333' }}>
-                                                                    {run.spec}
-                                                                </div>
-                                                                <div className="queue-timeline">
-                                                                    {phases.map((phase, idx) => (
-                                                                        <React.Fragment key={phase}>
-                                                                            <div
-                                                                                className="queue-tooltip"
-                                                                                data-tooltip={getPhaseTooltip(phase)}
-                                                                            >
-                                                                                <div
-                                                                                    className={`timeline-dot ${phase.toLowerCase()}`}
-                                                                                    style={{
-                                                                                        background: getPodPhaseColor(phase),
-                                                                                        opacity: idx <= currentPhaseIdx ? 1 : 0.3
-                                                                                    }}
-                                                                                />
-                                                                                <span style={{ fontSize: '10px', marginLeft: '2px', color: idx <= currentPhaseIdx ? '#333' : '#aaa' }}>
-                                                                                    {phase}
-                                                                                </span>
-                                                                            </div>
-                                                                            {idx < phases.length - 1 && <div className="timeline-connector" style={{ opacity: idx < currentPhaseIdx ? 1 : 0.3 }} />}
-                                                                        </React.Fragment>
-                                                                    ))}
-                                                                </div>
-                                                                <div style={{ fontSize: '11px', color: '#999', marginLeft: '8px', minWidth: '50px', textAlign: 'right' }}>
-                                                                    {run.completedAt && run.startedAt
-                                                                        ? `${((new Date(run.completedAt) - new Date(run.startedAt)) / 1000).toFixed(1)}s`
-                                                                        : run.startedAt
-                                                                            ? `${Math.floor((Date.now() - new Date(run.startedAt)) / 1000)}s`
-                                                                            : '-'
-                                                                    }
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="k8s-section">
-                                        <h3>📋 Test Requests with K8s Jobs</h3>
-                                        {queue.filter(r => r.k8sJobName).length === 0 ? (
-                                            <div style={{ fontSize: '13px', color: '#999', padding: '20px', background: '#f8f9fa', borderRadius: '6px' }}>
-                                                <div>No K8s jobs created yet</div>
-                                                <div style={{ fontSize: '11px', marginTop: '8px', color: '#ccc' }}>
-                                                    To see K8s in action, start minikube and run tests
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <table>
-                                                <thead>
-                                                    <tr>
-                                                        <th>Test Spec</th>
-                                                        <th>K8s Job Name</th>
-                                                        <th>Status</th>
-                                                        <th>Started</th>
-                                                        <th>Duration</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {queue.filter(r => r.k8sJobName).map(r => (
-                                                        <tr key={r.runId}>
-                                                            <td><strong>{r.spec}</strong></td>
-                                                            <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{r.k8sJobName}</td>
-                                                            <td><span className={`run-status-badge ${r.status}`}>{r.status}</span></td>
-                                                            <td>{r.startedAt ? new Date(r.startedAt).toLocaleTimeString() : '-'}</td>
-                                                            <td>
-                                                                {r.completedAt
-                                                                    ? `${(new Date(r.completedAt) - new Date(r.startedAt)) / 1000}s`
-                                                                    : r.startedAt
-                                                                        ? `${Math.floor((Date.now() - new Date(r.startedAt)) / 1000)}s`
-                                                                        : '-'
-                                                                }
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        )}
-                                    </div>
-
-                                    <div className="k8s-section">
-                                        <h3>🔧 K8s Pods (from running Jobs)</h3>
-                                        <p style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
-                                            Pods execute the actual Playwright tests. Lifecycle: Pending → Running → Succeeded/Failed
-                                        </p>
-                                        {k8sPods.length === 0 ? (
-                                            <div style={{ fontSize: '13px', color: '#999' }}>No pods yet</div>
-                                        ) : (
-                                            <table>
-                                                <thead>
-                                                    <tr>
-                                                        <th>Pod Name</th>
-                                                        <th>Phase</th>
-                                                        <th>Namespace</th>
-                                                        <th>Created</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {k8sPods.map(p => (
-                                                        <tr key={p.name} style={{ opacity: p.phase === 'Succeeded' ? 0.6 : 1 }}>
-                                                            <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{p.name}</td>
-                                                            <td>
-                                                                <span style={{
-                                                                    padding: '2px 8px',
-                                                                    borderRadius: '3px',
-                                                                    fontSize: '11px',
-                                                                    background: p.phase === 'Running' ? '#dbeafe' : p.phase === 'Succeeded' ? '#dcfce7' : '#fef3c7',
-                                                                    color: p.phase === 'Running' ? '#1e40af' : p.phase === 'Succeeded' ? '#166534' : '#92400e'
-                                                                }}>
-                                                                    {p.phase}
-                                                                </span>
-                                                            </td>
-                                                            <td>{p.namespace}</td>
-                                                            <td>{new Date(p.createdAt).toLocaleTimeString()}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        )}
-                                    </div>
-
-                                    <div className="k8s-section">
-                                        <h3>⚙️ K8s Jobs (orchestration layer)</h3>
-                                        <p style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
-                                            Jobs are K8s' way of managing test execution. Each Job runs one test spec and manages retry/cleanup.
-                                        </p>
-                                        {k8sJobs.length === 0 ? (
-                                            <div style={{ fontSize: '13px', color: '#999' }}>No jobs yet</div>
-                                        ) : (
-                                            <table>
-                                                <thead>
-                                                    <tr>
-                                                        <th>Job Name</th>
-                                                        <th>Desired</th>
-                                                        <th>Succeeded</th>
-                                                        <th>Failed</th>
-                                                        <th>Active</th>
-                                                        <th>Created</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {k8sJobs.map(j => (
-                                                        <tr key={j.name} style={{ opacity: j.succeeded > 0 ? 0.6 : 1 }}>
-                                                            <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{j.name}</td>
-                                                            <td>{j.completions || 1}</td>
-                                                            <td style={{ color: '#166534', fontWeight: '600' }}>{j.succeeded}</td>
-                                                            <td style={{ color: '#991b1b', fontWeight: '600' }}>{j.failed}</td>
-                                                            <td>{j.active || 0}</td>
-                                                            <td>{new Date(j.createdAt).toLocaleTimeString()}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        )}
-                                    </div>
-
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
+        if (loading) {
+          return (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100vh",
+              }}
+            >
+              <div style={{ color: "white", textAlign: "center" }}>
+                <div
+                  className="spinner"
+                  style={{
+                    marginBottom: "20px",
+                    borderColor: "white",
+                    borderTopColor: "transparent",
+                  }}
+                ></div>
+                <p>Loading dashboard...</p>
+              </div>
+            </div>
+          );
         }
 
-        ReactDOM.render(<Dashboard />, document.getElementById('root'));
-    </script>
-</body>
+        return (
+          <div className="container">
+            <div className="header">
+              <h1>🧪 Test Dashboard</h1>
+              <div className="header-status">
+                <div className="status-badge">
+                  <div className="status-dot"></div>
+                  <span>System Online</span>
+                </div>
+                <div className="status-badge">
+                  <span>{specs.length} Test Specs</span>
+                </div>
+                <div className="status-badge">
+                  <span>{queue.length} Runs</span>
+                </div>
+              </div>
+            </div>
 
+            <div className="main-content">
+              <div className="sidebar">
+                <h2>📋 Test Specs</h2>
+                <div className="spec-list">
+                  {specs.map((spec) => (
+                    <div
+                      key={spec.id}
+                      className={`spec-item ${selectedSpecs.has(spec.id) ? "selected" : ""}`}
+                      onClick={() => toggleSpec(spec.id)}
+                    >
+                      {spec.id}
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  className="run-button"
+                  onClick={runTests}
+                  disabled={selectedSpecs.size === 0}
+                >
+                  ▶️ Run Tests ({selectedSpecs.size})
+                </button>
+              </div>
+
+              <div className="content">
+                {stats.total > 0 && (
+                  <div className="stats-row">
+                    <div className="stat-card">
+                      <div className="stat-value">{stats.total}</div>
+                      <div className="stat-label">Total Tests</div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="stat-value" style={{ color: "#4ade80" }}>
+                        {stats.passed}
+                      </div>
+                      <div className="stat-label">Passed</div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="stat-value" style={{ color: "#ff6b6b" }}>
+                        {stats.failed}
+                      </div>
+                      <div className="stat-label">Failed</div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="tabs">
+                  <button
+                    className={`tab ${activeTab === "queue" ? "active" : ""}`}
+                    onClick={() => setActiveTab("queue")}
+                  >
+                    Queue ({queue.filter((r) => r.status !== "queued").length})
+                  </button>
+                  <button
+                    className={`tab ${activeTab === "history" ? "active" : ""}`}
+                    onClick={() => setActiveTab("history")}
+                  >
+                    History ({queue.length})
+                  </button>
+                  <button
+                    className={`tab ${activeTab === "report" ? "active" : ""}`}
+                    onClick={() => setActiveTab("report")}
+                  >
+                    📊 Report
+                  </button>
+                  <button
+                    className={`tab ${activeTab === "containers" ? "active" : ""}`}
+                    onClick={() => setActiveTab("containers")}
+                  >
+                    🐳 Containers
+                  </button>
+                  <button
+                    className={`tab ${activeTab === "k8s" ? "active" : ""}`}
+                    onClick={() => setActiveTab("k8s")}
+                  >
+                    ☸️ Kubernetes
+                  </button>
+                </div>
+
+                {activeTab === "queue" && (
+                  <div>
+                    {queue.filter((r) => r.status !== "queued").length === 0 ? (
+                      <div className="empty-state">
+                        <div>No running or completed tests</div>
+                        <div style={{ fontSize: "12px", marginTop: "10px" }}>
+                          Select specs and click "Run Tests" to start
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="run-queue">
+                        {queue
+                          .filter((r) => r.status !== "queued")
+                          .map((run) => (
+                            <div
+                              key={run.runId}
+                              className={`run-card ${expandedRun === run.runId ? "expanded" : ""}`}
+                              onClick={() =>
+                                setExpandedRun(
+                                  expandedRun === run.runId ? null : run.runId,
+                                )
+                              }
+                            >
+                              <div className="run-header">
+                                <div className="run-title">
+                                  {run.status === "running" && (
+                                    <div className="spinner"></div>
+                                  )}
+                                  <span style={{ fontWeight: "600" }}>
+                                    {run.spec}
+                                  </span>
+                                  <span
+                                    className={`run-status-badge ${run.status}`}
+                                  >
+                                    {run.status}
+                                  </span>
+                                </div>
+                                <span
+                                  style={{ fontSize: "12px", color: "#999" }}
+                                >
+                                  {run.completedAt
+                                    ? `${(new Date(run.completedAt) - new Date(run.startedAt)) / 1000}s`
+                                    : run.startedAt
+                                      ? `${Math.floor((Date.now() - new Date(run.startedAt)) / 1000)}s`
+                                      : "-"}
+                                </span>
+                              </div>
+
+                              <div className="run-meta">
+                                {run.startedAt &&
+                                  new Date(run.startedAt).toLocaleTimeString()}
+                              </div>
+
+                              {expandedRun === run.runId && run.stdout && (
+                                <div className="stdout-container">
+                                  {run.stdout.replace(/\x1b\[[0-9;]*m/g, "")}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === "history" && (
+                  <div>
+                    {queue.length === 0 ? (
+                      <div className="empty-state">
+                        <div>No test runs yet</div>
+                      </div>
+                    ) : (
+                      <div className="run-queue">
+                        {queue.map((run) => (
+                          <div
+                            key={run.runId}
+                            className={`run-card ${expandedRun === run.runId ? "expanded" : ""}`}
+                            onClick={() =>
+                              setExpandedRun(
+                                expandedRun === run.runId ? null : run.runId,
+                              )
+                            }
+                          >
+                            <div className="run-header">
+                              <div className="run-title">
+                                {run.status === "running" && (
+                                  <div className="spinner"></div>
+                                )}
+                                <span style={{ fontWeight: "600" }}>
+                                  {run.spec}
+                                </span>
+                                <span
+                                  className={`run-status-badge ${run.status}`}
+                                >
+                                  {run.status}
+                                </span>
+                              </div>
+                              <span style={{ fontSize: "12px", color: "#999" }}>
+                                {run.completedAt
+                                  ? `${(new Date(run.completedAt) - new Date(run.startedAt)) / 1000}s`
+                                  : run.startedAt
+                                    ? `${Math.floor((Date.now() - new Date(run.startedAt)) / 1000)}s`
+                                    : "-"}
+                              </span>
+                            </div>
+
+                            <div className="run-meta">
+                              {run.startedAt &&
+                                new Date(run.startedAt).toLocaleTimeString()}
+                              {(run.status === "passed" ||
+                                run.status === "failed") &&
+                                run.completedAt && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setReportRunId(run.runId);
+                                      setActiveTab("report");
+                                    }}
+                                    style={{
+                                      marginLeft: "12px",
+                                      padding: "4px 12px",
+                                      background:
+                                        run.status === "failed"
+                                          ? "#ff6b6b"
+                                          : "#667eea",
+                                      color: "white",
+                                      border: "none",
+                                      borderRadius: "4px",
+                                      fontSize: "11px",
+                                      cursor: "pointer",
+                                      fontWeight: "500",
+                                    }}
+                                  >
+                                    📊 View Report
+                                  </button>
+                                )}
+                            </div>
+
+                            {expandedRun === run.runId && run.stdout && (
+                              <div className="stdout-container">
+                                {run.stdout.replace(/\x1b\[[0-9;]*m/g, "")}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === "report" && (
+                  <div>
+                    {!reportRunId ? (
+                      <div className="empty-state">
+                        <div>📊 No report selected</div>
+                        <div style={{ fontSize: "12px", marginTop: "10px" }}>
+                          Click "View Report" on a passed test in the History
+                          tab
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div
+                          style={{
+                            marginBottom: "15px",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <p style={{ fontSize: "13px", color: "#666" }}>
+                            📊 Report for:{" "}
+                            <strong>
+                              {queue.find((r) => r.runId === reportRunId)?.spec}
+                            </strong>
+                          </p>
+                          <button
+                            onClick={() => setReportRunId(null)}
+                            style={{
+                              padding: "4px 12px",
+                              background: "#f0f0f0",
+                              border: "1px solid #e0e0e0",
+                              borderRadius: "4px",
+                              fontSize: "12px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            ✕ Close
+                          </button>
+                        </div>
+                        <iframe
+                          src={`${API_URL}/report?runId=${reportRunId}`}
+                          style={{
+                            width: "100%",
+                            height: "800px",
+                            border: "1px solid #e0e0e0",
+                            borderRadius: "8px",
+                          }}
+                          title="Playwright Report"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === "containers" && (
+                  <div>
+                    {containers.length === 0 ? (
+                      <div className="empty-state">No containers running</div>
+                    ) : (
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>State</th>
+                            <th>Status</th>
+                            <th>Ports</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {containers.map((c) => (
+                            <tr key={c.id}>
+                              <td>{c.name}</td>
+                              <td>{c.state}</td>
+                              <td>{c.status}</td>
+                              <td>{c.ports.join(", ")}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === "k8s" && (
+                  <div>
+                    <div className="k8s-section">
+                      <h3>📊 Queue & Scaling Monitor</h3>
+                      <p
+                        style={{
+                          fontSize: "12px",
+                          color: "#666",
+                          marginBottom: "16px",
+                        }}
+                      >
+                        Real-time view of test queue and Kubernetes pod scaling
+                      </p>
+
+                      <div className="queue-stats">
+                        <div
+                          className="queue-stat-card"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                          }}
+                        >
+                          <div className="queue-stat-number">
+                            {queue.filter((r) => r.status === "queued").length}
+                          </div>
+                          <div className="queue-stat-label">Queued</div>
+                        </div>
+                        <div
+                          className="queue-stat-card"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)",
+                          }}
+                        >
+                          <div className="queue-stat-number">
+                            {
+                              queue.filter(
+                                (r) =>
+                                  r.status === "running" ||
+                                  r.podPhase === "Running",
+                              ).length
+                            }
+                          </div>
+                          <div className="queue-stat-label">Running Pods</div>
+                        </div>
+                        <div
+                          className="queue-stat-card"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #10b981 0%, #047857 100%)",
+                          }}
+                        >
+                          <div className="queue-stat-number">
+                            {queue.filter((r) => r.status === "passed").length}
+                          </div>
+                          <div className="queue-stat-label">Succeeded</div>
+                        </div>
+                        <div
+                          className="queue-stat-card"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #ef4444 0%, #991b1b 100%)",
+                          }}
+                        >
+                          <div className="queue-stat-number">
+                            {queue.filter((r) => r.status === "failed").length}
+                          </div>
+                          <div className="queue-stat-label">Failed</div>
+                        </div>
+                      </div>
+
+                      {queue.filter((r) => r.k8sJobName).length > 0 && (
+                        <div style={{ marginBottom: "30px" }}>
+                          <h4
+                            style={{
+                              fontSize: "13px",
+                              fontWeight: "600",
+                              marginBottom: "12px",
+                              color: "#333",
+                            }}
+                          >
+                            Test Timeline
+                          </h4>
+                          <div className="queue-stack">
+                            {queue
+                              .filter((r) => r.k8sJobName)
+                              .map((run) => {
+                                const phases = getQueuePhaseSequence(run);
+                                let currentPhaseIdx = 0;
+                                if (run.status === "queued") {
+                                  currentPhaseIdx = 0;
+                                } else if (
+                                  run.status === "passed" ||
+                                  run.status === "failed"
+                                ) {
+                                  currentPhaseIdx = phases.length - 1;
+                                } else if (run.podPhase === "Pending") {
+                                  currentPhaseIdx = 1;
+                                } else if (run.podPhase === "Running") {
+                                  currentPhaseIdx = 1;
+                                }
+
+                                return (
+                                  <div key={run.runId} className="queue-item">
+                                    <div
+                                      style={{
+                                        minWidth: "80px",
+                                        fontWeight: "500",
+                                        fontSize: "12px",
+                                        color: "#333",
+                                      }}
+                                    >
+                                      {run.spec}
+                                    </div>
+                                    <div className="queue-timeline">
+                                      {phases.map((phase, idx) => (
+                                        <React.Fragment key={phase}>
+                                          <div
+                                            className="queue-tooltip"
+                                            data-tooltip={getPhaseTooltip(
+                                              phase,
+                                            )}
+                                          >
+                                            <div
+                                              className={`timeline-dot ${phase.toLowerCase()}`}
+                                              style={{
+                                                background:
+                                                  getPodPhaseColor(phase),
+                                                opacity:
+                                                  idx <= currentPhaseIdx
+                                                    ? 1
+                                                    : 0.3,
+                                              }}
+                                            />
+                                            <span
+                                              style={{
+                                                fontSize: "10px",
+                                                marginLeft: "2px",
+                                                color:
+                                                  idx <= currentPhaseIdx
+                                                    ? "#333"
+                                                    : "#aaa",
+                                              }}
+                                            >
+                                              {phase}
+                                            </span>
+                                          </div>
+                                          {idx < phases.length - 1 && (
+                                            <div
+                                              className="timeline-connector"
+                                              style={{
+                                                opacity:
+                                                  idx < currentPhaseIdx
+                                                    ? 1
+                                                    : 0.3,
+                                              }}
+                                            />
+                                          )}
+                                        </React.Fragment>
+                                      ))}
+                                    </div>
+                                    <div
+                                      style={{
+                                        fontSize: "11px",
+                                        color: "#999",
+                                        marginLeft: "8px",
+                                        minWidth: "50px",
+                                        textAlign: "right",
+                                      }}
+                                    >
+                                      {run.completedAt && run.startedAt
+                                        ? `${((new Date(run.completedAt) - new Date(run.startedAt)) / 1000).toFixed(1)}s`
+                                        : run.startedAt
+                                          ? `${Math.floor((Date.now() - new Date(run.startedAt)) / 1000)}s`
+                                          : "-"}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="k8s-section">
+                      <h3>📋 Test Requests with K8s Jobs</h3>
+                      {queue.filter((r) => r.k8sJobName).length === 0 ? (
+                        <div
+                          style={{
+                            fontSize: "13px",
+                            color: "#999",
+                            padding: "20px",
+                            background: "#f8f9fa",
+                            borderRadius: "6px",
+                          }}
+                        >
+                          <div>No K8s jobs created yet</div>
+                          <div
+                            style={{
+                              fontSize: "11px",
+                              marginTop: "8px",
+                              color: "#ccc",
+                            }}
+                          >
+                            To see K8s in action, start minikube and run tests
+                          </div>
+                        </div>
+                      ) : (
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Test Spec</th>
+                              <th>K8s Job Name</th>
+                              <th>Status</th>
+                              <th>Started</th>
+                              <th>Duration</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {queue
+                              .filter((r) => r.k8sJobName)
+                              .map((r) => (
+                                <tr key={r.runId}>
+                                  <td>
+                                    <strong>{r.spec}</strong>
+                                  </td>
+                                  <td
+                                    style={{
+                                      fontFamily: "monospace",
+                                      fontSize: "12px",
+                                    }}
+                                  >
+                                    {r.k8sJobName}
+                                  </td>
+                                  <td>
+                                    <span
+                                      className={`run-status-badge ${r.status}`}
+                                    >
+                                      {r.status}
+                                    </span>
+                                  </td>
+                                  <td>
+                                    {r.startedAt
+                                      ? new Date(
+                                          r.startedAt,
+                                        ).toLocaleTimeString()
+                                      : "-"}
+                                  </td>
+                                  <td>
+                                    {r.completedAt
+                                      ? `${(new Date(r.completedAt) - new Date(r.startedAt)) / 1000}s`
+                                      : r.startedAt
+                                        ? `${Math.floor((Date.now() - new Date(r.startedAt)) / 1000)}s`
+                                        : "-"}
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+
+                    <div className="k8s-section">
+                      <h3>🔧 K8s Pods (from running Jobs)</h3>
+                      <p
+                        style={{
+                          fontSize: "12px",
+                          color: "#666",
+                          marginBottom: "12px",
+                        }}
+                      >
+                        Pods execute the actual Playwright tests. Lifecycle:
+                        Pending → Running → Succeeded/Failed
+                      </p>
+                      {k8sPods.length === 0 ? (
+                        <div style={{ fontSize: "13px", color: "#999" }}>
+                          No pods yet
+                        </div>
+                      ) : (
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Pod Name</th>
+                              <th>Phase</th>
+                              <th>Namespace</th>
+                              <th>Created</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {k8sPods.map((p) => (
+                              <tr
+                                key={p.name}
+                                style={{
+                                  opacity: p.phase === "Succeeded" ? 0.6 : 1,
+                                }}
+                              >
+                                <td
+                                  style={{
+                                    fontFamily: "monospace",
+                                    fontSize: "12px",
+                                  }}
+                                >
+                                  {p.name}
+                                </td>
+                                <td>
+                                  <span
+                                    style={{
+                                      padding: "2px 8px",
+                                      borderRadius: "3px",
+                                      fontSize: "11px",
+                                      background:
+                                        p.phase === "Running"
+                                          ? "#dbeafe"
+                                          : p.phase === "Succeeded"
+                                            ? "#dcfce7"
+                                            : "#fef3c7",
+                                      color:
+                                        p.phase === "Running"
+                                          ? "#1e40af"
+                                          : p.phase === "Succeeded"
+                                            ? "#166534"
+                                            : "#92400e",
+                                    }}
+                                  >
+                                    {p.phase}
+                                  </span>
+                                </td>
+                                <td>{p.namespace}</td>
+                                <td>
+                                  {new Date(p.createdAt).toLocaleTimeString()}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+
+                    <div className="k8s-section">
+                      <h3>⚙️ K8s Jobs (orchestration layer)</h3>
+                      <p
+                        style={{
+                          fontSize: "12px",
+                          color: "#666",
+                          marginBottom: "12px",
+                        }}
+                      >
+                        Jobs are K8s' way of managing test execution. Each Job
+                        runs one test spec and manages retry/cleanup.
+                      </p>
+                      {k8sJobs.length === 0 ? (
+                        <div style={{ fontSize: "13px", color: "#999" }}>
+                          No jobs yet
+                        </div>
+                      ) : (
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Job Name</th>
+                              <th>Desired</th>
+                              <th>Succeeded</th>
+                              <th>Failed</th>
+                              <th>Active</th>
+                              <th>Created</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {k8sJobs.map((j) => (
+                              <tr
+                                key={j.name}
+                                style={{ opacity: j.succeeded > 0 ? 0.6 : 1 }}
+                              >
+                                <td
+                                  style={{
+                                    fontFamily: "monospace",
+                                    fontSize: "12px",
+                                  }}
+                                >
+                                  {j.name}
+                                </td>
+                                <td>{j.completions || 1}</td>
+                                <td
+                                  style={{
+                                    color: "#166534",
+                                    fontWeight: "600",
+                                  }}
+                                >
+                                  {j.succeeded}
+                                </td>
+                                <td
+                                  style={{
+                                    color: "#991b1b",
+                                    fontWeight: "600",
+                                  }}
+                                >
+                                  {j.failed}
+                                </td>
+                                <td>{j.active || 0}</td>
+                                <td>
+                                  {new Date(j.createdAt).toLocaleTimeString()}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      ReactDOM.render(<Dashboard />, document.getElementById("root"));
+    </script>
+  </body>
 </html>

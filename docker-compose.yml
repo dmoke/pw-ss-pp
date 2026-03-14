@@ -1,0 +1,90 @@
+services:
+  # ============ LAYER 1: TEST TARGET ============
+  # Demo e-commerce app (the app being tested)
+  app:
+    container_name: pw-app
+    build:
+      context: .
+      dockerfile: Dockerfile.demo-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - WEB_URL=http://app:3000
+    volumes:
+      - ./site:/app/site
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      pw-network:
+        ipv4_address: 172.19.0.10
+
+  # ============ LAYER 2: ORCHESTRATION ============
+  # Test Dashboard API (runs tests, monitors containers)
+  dashboard-api:
+    container_name: pw-dashboard-api
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=development
+      - DASHBOARD_PORT=4000
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - SKIP_WEB_SERVER=true
+      - WEB_URL=http://172.19.0.10:3000
+    volumes:
+      # Test results volumes
+      - ./test-results:/app/test-results
+      - ./pw-report-json:/app/pw-report-json
+      - ./pw-report-html:/app/pw-report-html
+      - ./dashboard-server.js:/app/dashboard-server.js
+      # Docker socket for monitoring containers
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4000/api/dashboard/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      pw-network:
+        ipv4_address: 172.19.0.20
+
+  # ============ LAYER 3: UI ============
+  # Test Dashboard UI (visualizes test runs and container status)
+  dashboard-ui:
+    container_name: pw-dashboard-ui
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard-ui
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_API_URL=http://localhost:4000
+    depends_on:
+      dashboard-api:
+        condition: service_healthy
+    networks:
+      pw-network:
+        ipv4_address: 172.19.0.30
+
+networks:
+  pw-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16
+
+volumes:
+  test-results:
+  pw-report-json:
+  pw-report-html:

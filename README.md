@@ -1,74 +1,63 @@
-# Playwright TypeScript Test Suite with Session Storage Auth
+# 🧪 Playwright Test Suite + Test Dashboard
 
-A comprehensive Playwright test automation project with **565 tests** using **session storage-based authentication**. Tests run in parallel with up to 10 workers using a round-robin account assignment strategy.
+A comprehensive Playwright test automation project with **session storage-based authentication** + a **production-ready test dashboard** for manual testers.
 
-## Features
+## Quick Start (Choose One)
 
-✅ **10 Test Accounts** - Pre-configured with session persistence  
-✅ **565 Test Cases** - Mixed guest and authenticated scenarios  
-✅ **Session Storage Auth** - No login/logout overhead, uses Playwright's session storage  
-✅ **Round-Robin Assignment** - Worker ID determines which account to use  
-✅ **Parallel Execution** - Full support for 1-10 workers without conflicts  
-✅ **TypeScript Ready** - Fully typed with modern TypeScript config  
-✅ **Real Login Testing** - Uses practicetestautomation.com as test website
-
-## Project Structure
-
-```
-pw-ss-pp/
-├── src/
-│   ├── fixtures/
-│   │   └── auth.ts                # Test fixtures (guest, authenticated)
-│   ├── server.js                  # Express-based API server exposing endpoints and swagger UI
-│   ├── tests/api.spec.ts          # Example API tests using Playwright request fixture
-│   └── test-data/
-│       └── accounts.ts            # Test account definitions
-├── tests/
-│   ├── guest.spec.ts              # 5 guest tests (no auth required)
-│   ├── auth.spec.ts               # 550 authenticated tests
-│   ├── worker-sessions.spec.ts    # 5 worker session tests
-│   └── concurrency.spec.ts        # 5 session storage integration tests
-├── .auth/                         # Session storage files (git-ignored)
-├── playwright.config.ts           # Playwright configuration
-├── tsconfig.json                  # TypeScript configuration
-├── README.md                      # Full documentation
-└── package.json                   # Dependencies & scripts
-```
-
-## Setup Instructions
-
-### 1. Install Dependencies
-
+### 🏃 Local Development (Fastest)
 ```bash
-npm install
+npm run dev:local
+# Opens: http://localhost:3001
 ```
+3 local processes, no Docker overhead. Best for active development.
 
-### 2. Run Tests
-
-You can exercise the new API demo tests with:
-
+### 🐳 Docker Compose (Recommended)
 ```bash
-npm run test:api        # only the API demo spec (requires server.js)
+npm run dev:docker
+# Opens: http://localhost:3001
 ```
+3 Docker containers, production-like setup, container monitoring in dashboard.
 
+### ☸️ Kubernetes + Docker (Advanced)
 ```bash
-# Run all tests
-npm test
+npm run k8s:minikube:start
+npm run dev:docker
+npm run k8s:deploy              # optional, for scaling demo
+```
+See [k8s/README.md](k8s/README.md) for complete guide.
 
-# Run only guest tests
-npm run test:guest
+**All open dashboard at http://localhost:3001**
 
-# Run only auth tests (550+ tests)
-npm run test:auth
+## Running Tests
 
-# Run tests in UI mode (interactive)
-npm run test:ui
+### Via Dashboard (Recommended)
+1. Start dashboard: `npm run dev:docker`
+2. Open **http://localhost:3001**
+3. Select test specs from sidebar
+4. Click "▶️ Run Tests"
+5. Watch in real-time:
+   - 📊 Execution logs (with timestamps)
+   - 🐳 Container status + logs (Docker Compose)
+   - ☸️ K8s pods/jobs (if using Kubernetes)
+   - 📊 Test results table
+   - 📈 Run history
 
-# Run tests in headed mode (visible browser)
-npm run test:headed
+### Dashboard Tabs
+- **Execution Logs** - Real-time test output
+- **Test Results** - Pass/fail breakdown
+- **🐳 Containers** - Docker container status + logs
+- **☸️ Kubernetes** - K8s pods and jobs (when scaling)
+- **Run History** - Past test runs
+- **HTML Report** - Full Playwright analytics
 
-# View HTML report
-npm run test:report
+### Via Command Line
+```bash
+npm test                 # All tests, all workers
+npm run test:auth       # Auth tests only
+npm run test:api        # API tests only
+npm run test:ui         # UI mode (interactive)
+npm run test:headed     # Visible browser
+npm run test:report     # View previous results
 ```
 
 ## Authentication System
@@ -161,146 +150,128 @@ All test accounts have valid credentials:
 
 ## Configuration
 
-### Workers
+**Workers**: Edit `playwright.config.ts` to adjust count (max = account count, default 10)
 
-Edit `playwright.config.ts` to adjust worker count:
+**Test Accounts**: Edit `src/test-data/accounts.ts` to add/remove credentials
 
-```typescript
-workers: process.env.CI ? 1 : 10,
+**Browser**: Configure in `playwright.config.ts` (currently Chromium)
+
+## Credentials
+
+| Username | Password |
+|----------|----------|
+| student | Password123 |
+| testuser1-9 | Test@1234 |
+
+## Common Commands
+
+```bash
+# Development startup (pick one)
+npm run dev:local              # Local: 3 terminals
+npm run dev:docker             # Docker: 1 command
+
+# Control Docker Compose
+npm run dev:docker:stop        # Stop all services
+npm run dev:docker:logs        # View all logs
+
+# Run tests from command line
+npm test                       # All tests
+npm run test:auth             # Auth tests
+npm run test:ui               # Interactive mode
+npm run test:report           # View results
+
+# Port management
+npm run port:kill:all          # Clear stuck ports
 ```
 
-Max workers = number of accounts (10)
-
-### Adding More Accounts
-
-1. Edit `src/test-data/accounts.ts`:
-
-```typescript
-export const TEST_ACCOUNTS = [
-  // ... existing 10 accounts
-  { username: "testuser10", password: "Test@1234" },
-  { username: "testuser11", password: "Test@1234" },
-];
-```
-
-2. Update `playwright.config.ts`:
-
-```typescript
-workers: 12,  // Max workers = account count
-```
-
-### Browser
-
-Currently configured for Chromium. To add more browsers:
-
-```typescript
-projects: [
-  { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-  { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-  { name: 'webkit', use: { ...devices['Desktop Safari'] } },
-],
-```
-
-## Session Storage Format
-
-`.auth/auth-0.json` (example for account 0):
-
-```json
-{
-  "cookies": [
-    {
-      "name": "session_id",
-      "value": "abc123...",
-      "domain": "practicetestautomation.com",
-      "path": "/",
-      "expires": 1706...,
-      "httpOnly": true,
-      "secure": true,
-      "sameSite": "Lax"
-    }
-  ],
-  "origins": [
-    {
-      "origin": "https://practicetestautomation.com",
-      "localStorage": [
-        {
-          "name": "user_pref",
-          "value": "..."
-        }
-      ]
-    }
-  ]
-}
-```
+**For K8s commands**: See [k8s/README.md](k8s/README.md)
 
 ## Troubleshooting
 
-| Issue               | Solution                                         |
-| ------------------- | ------------------------------------------------ |
-| Tests can't login   | Check credentials in `src/test-data/accounts.ts` |
-| Session expired     | Delete `.auth/` folder to force re-login         |
-| Worker conflicts    | Ensure workers ≤ account count                   |
-| Session not loading | Check `.auth/` files exist and are readable      |
+| Issue | Solution |
+|-------|----------|
+| Cannot access http://localhost:3001 | Ensure dashboard running: `npm run dev:docker` or `npm run dev:local` |
+| "Port already in use" | Run `npm run port:kill:all` |
+| Tests can't login | Check credentials in `src/test-data/accounts.ts` |
+| Session expired | Delete `.auth/` folder to force re-login |
+| Playwright not found | Run `npx playwright install` |
+| Docker won't start | Check logs: `npm run dev:docker:logs` |
 
-## Performance Tips
+## How It Works
 
-1. **Parallel Execution**: Use 8-10 workers for optimal throughput
-2. **Session Reuse**: Sessions persist across test runs for speed
-3. **Skip Headless**: Run with `--headed` for debugging only
-4. **CI/CD**: Use workers=1 for deterministic CI runs
+**Session Storage Auth**: Each worker gets a unique test account. Sessions (cookies + localStorage) are cached in `.auth/` and reused across runs—no repeated logins.
 
-## CI/CD Integration
-
-```bash
-# CI environment
-PLAYWRIGHT_WORKERS=1 npm test
+```
+Worker 0 → Account 0 (student)
+Worker 1 → Account 1 (testuser1)
+...
+Worker 10 → Account 0 (wraps around)
 ```
 
-Or in CI, `playwright.config.ts` uses 1 worker by default when `CI=true`.
+**Fixtures**: Use `authenticatedPage` (auto-logged-in) or `guestPage` (no auth) in tests. Fixtures handle session loading/saving automatically.
 
-## Dependencies
+## Project Structure
 
-- **@playwright/test** - End-to-end testing framework
-- **typescript** - Language & type safety
-- **@types/node** - Node.js type definitions
+```
+pw-ss-pp/
+├── tests/                 # Test specs
+├── src/fixtures/          # Test fixtures
+├── src/pages/             # Page objects
+├── src/api/               # API helpers
+├── dashboard-server.js    # Test orchestration API
+├── dashboard/             # Dashboard UI
+├── playwright.config.ts   # Config
+└── site/
+    └── server.js          # Demo app
+```
 
-## Best Practices
+## API Endpoints
 
-1. ✅ Use `authenticatedPage` fixture for auth-required tests
-2. ✅ Use `guestPage` fixture for unauthenticated scenarios
-3. ✅ Let fixtures handle session loading/saving automatically
-4. ✅ Don't manually manage sessions in tests
-5. ✅ Review `.auth/` folder if tests fail to authenticate
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/dashboard/health` | Health check |
+| GET | `/api/dashboard/specs` | List test specs |
+| POST | `/api/dashboard/run` | Execute tests |
+| GET | `/api/dashboard/results` | Get latest results |
+| GET | `/api/dashboard/report` | Get HTML report |
+| GET | `/api/dashboard/history` | Get run history |
 
-## Architecture Comparison
+## How It Works: 3 Layers
 
-### Old Approach (Removed)
+```
+┌──────────────────────────────┐
+│   Dashboard UI (3001)        │  ← You interact here
+│   Select tests, view results │
+└──────────────┬───────────────┘
+               │ API calls
+┌──────────────▼───────────────┐
+│   Dashboard API (4000)       │
+│   Orchestrates test runs     │
+│   Monitors containers/pods   │
+└──────────────┬───────────────┘
+               │
+      ┌────────┴──────────┐
+      ▼                   ▼
+   App (3000)       K8s Pods (if scaling)
+  being tested      running tests
+```
 
-- ❌ Manual login/logout per test
-- ❌ File-based account locking
-- ❌ Queue waiting for available accounts
-- ❌ Overhead on every test run
+**Startup Order (automatic)**:
+1. App (3000) - the target being tested
+2. API (4000) - test orchestrator, waits for app healthy
+3. UI (3001) - waits for API healthy
 
-### New Approach (Current)
+### Dashboard Features
 
-- ✅ Session storage-based authentication
-- ✅ Round-robin worker → account mapping
-- ✅ One login per account per session
-- ✅ Instant test execution
-- ✅ Scales to N accounts and N workers
+- ✅ Run tests with one click
+- ✅ View live results + HTML reports
+- ✅ Monitor active containers/pods
+- ✅ Stream container logs in real-time
+- ✅ See test history
+- ✅ Watch horizontal scaling in action (K8s mode)
 
-## Future Enhancements
+## Learn More
 
-- [ ] Multi-browser session storage
-- [ ] Session refresh on expiry
-- [ ] Account rotation strategy
-- [ ] Parallel test isolation per account
-- [ ] Failed session recovery
-
----
-
-**Created**: January 2026  
-**Framework**: Playwright + TypeScript  
-**Auth Model**: Session Storage (Cookies + LocalStorage)  
-**Max Workers**: 10 (= number of test accounts)  
-**Total Tests**: 565 (5 guest + 550 auth + 5 worker + 5 concurrency)
+- **Docker & Kubernetes**: [k8s/README.md](k8s/README.md) - Complete deployment guide with data flows
+- **Package Scripts**: All npm scripts prefixed for clarity: `npm run` then search for `dev:`, `app:`, `dashboard:`, `k8s:`, `port:`
+- **Test Details**: See `playwright.config.ts` and test files in `tests/`

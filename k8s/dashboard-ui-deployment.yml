@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard-ui
+  labels:
+    app: dashboard-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard-ui
+  template:
+    metadata:
+      labels:
+        app: dashboard-ui
+    spec:
+      containers:
+      - name: dashboard-ui
+        image: pw-ss-pp-ui:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3001
+          name: http
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3001
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3001
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-ui
+spec:
+  type: NodePort
+  selector:
+    app: dashboard-ui
+  ports:
+  - protocol: TCP
+    port: 3001
+    targetPort: 3001
+    nodePort: 30001
+    name: http

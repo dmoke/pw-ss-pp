@@ -2,8 +2,11 @@ import { defineConfig, devices, ReporterDescription } from "@playwright/test";
 import dotenv from "dotenv";
 
 
-if (!process.env.CI) dotenv.config({ path: ".env", override: true });
-dotenv.config({ path: `./config/${process.env.ENVIRONMENT}.env`, override: true });
+if (!process.env.CI) dotenv.config({ path: ".env", override: false });
+dotenv.config({ path: `./config/${process.env.ENVIRONMENT}.env`, override: false });
+
+const headlessConfig = process.env.HEADLESS !== "false";
+const baseURL = process.env.WEB_URL || "http://localhost:3000";
 
 export default defineConfig({
   testDir: "./tests",
@@ -24,10 +27,10 @@ export default defineConfig({
   ],
   timeout: 60 * 10 * 1_000 /* 10 min */,
   use: {
-    baseURL: process.env.WEB_URL,
+    baseURL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
-    headless: process.env.HEADLESS === "true",
+    headless: headlessConfig,
     actionTimeout: 25_000,
   },
 
@@ -38,11 +41,15 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: "node server.js",
-    port: 3000,
-    reuseExistingServer: !process.env.CI,
-  },
+  ...(process.env.SKIP_WEB_SERVER
+    ? {}
+    : {
+        webServer: {
+          command: "node site/server.js",
+          port: 3000,
+          reuseExistingServer: !process.env.CI,
+        },
+      }),
 });
 
 // import { ReporterDescription, defineConfig, devices } from '@playwright/test';

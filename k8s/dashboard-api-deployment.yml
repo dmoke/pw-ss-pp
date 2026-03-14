@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard-api
+  labels:
+    app: dashboard-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard-api
+  template:
+    metadata:
+      labels:
+        app: dashboard-api
+    spec:
+      containers:
+      - name: dashboard-api
+        image: pw-ss-pp:latest
+        imagePullPolicy: Never
+        command: ["node", "dashboard-server.js"]
+        ports:
+        - containerPort: 4000
+          name: http
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: DASHBOARD_PORT
+          value: "4000"
+        envFrom:
+        - configMapRef:
+            name: test-dashboard-config
+        volumeMounts:
+        - name: test-results
+          mountPath: /app/test-results
+        - name: reports
+          mountPath: /app/pw-report-html
+        - name: pw-report-json
+          mountPath: /app/pw-report-json
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/dashboard/health
+            port: 4000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/dashboard/health
+            port: 4000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      volumes:
+      - name: test-results
+        persistentVolumeClaim:
+          claimName: test-results-pvc
+      - name: reports
+        persistentVolumeClaim:
+          claimName: reports-pvc
+      - name: pw-report-json
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-api
+spec:
+  type: ClusterIP
+  selector:
+    app: dashboard-api
+  ports:
+  - protocol: TCP
+    port: 4000
+    targetPort: 4000
+    name: http

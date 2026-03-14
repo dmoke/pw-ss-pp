@@ -1,0 +1,19 @@
+# Dockerfile for Test Dashboard UI
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json ./
+
+# Install http-server to serve static files
+RUN npm install -g http-server
+
+# Copy dashboard UI
+COPY dashboard ./dashboard
+
+# Expose UI port
+EXPOSE 3001
+
+# Serve dashboard UI on port 3001
+CMD ["http-server", "dashboard", "-p", "3001", "-c-1"]

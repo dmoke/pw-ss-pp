@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-dashboard-config
+  namespace: default
+data:
+  DASHBOARD_PORT: "4000"
+  NODE_ENV: "production"
+  API_LOG_LEVEL: "info"

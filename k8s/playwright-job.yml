@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: run-test-api-spec    # lowercase, no < or >
+spec:
+  template:
+    metadata:
+      labels:
+        job-name: run-test-api-spec
+    spec:
+      containers:
+      - name: playwright
+        image: pw-ss-pp:latest
+        command: ["npx","playwright","test","tests/api.spec.ts","--reporter=json"]
+        volumeMounts:
+        - name: test-results
+          mountPath: /app/test-results
+      restartPolicy: Never
+      volumes:
+      - name: test-results
+        persistentVolumeClaim:
+          claimName: test-results-pvc

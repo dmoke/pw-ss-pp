@@ -32,7 +32,7 @@ app.use((req, res, next) => {
 });
 
 // ============ RUN QUEUE ============
-const runQueue = new Map(); // runId → { runId, spec, specPath, status, stdout, stderr, exitCode, startedAt, completedAt, envVars, k8sJobName? }
+const runQueue = new Map(); // runId → { runId, spec, specPath, status, stdout, stderr, exitCode, startedAt, completedAt, envVars, k8sJobName?, podPhase?, podName? }
 let k8sAvailable = false;
 
 function checkK8sAvailable() {
@@ -49,7 +49,9 @@ checkK8sAvailable();
 
 function generateJobYaml(runId, specPath, envVars = {}) {
   const spec = path.basename(specPath, ".spec.ts");
-  const jobName = `pw-${spec}-${runId.split("-").pop()}`.toLowerCase().slice(0, 63);
+  const jobName = `pw-${spec}-${runId.split("-").pop()}`
+    .toLowerCase()
+    .slice(0, 63);
 
   // Build env vars section for the Job
   const envLines = Object.entries(envVars)
@@ -105,7 +107,11 @@ async function getAvailableSpecs() {
     const files = await fs.readdir(testsDir);
     return files
       .filter((f) => f.endsWith(".spec.ts"))
-      .map((f) => ({ name: f, path: `tests/${f}`, id: f.replace(".spec.ts", "") }));
+      .map((f) => ({
+        name: f,
+        path: `tests/${f}`,
+        id: f.replace(".spec.ts", ""),
+      }));
   } catch (err) {
     console.error("Error reading test specs:", err);
     return [];
@@ -113,13 +119,17 @@ async function getAvailableSpecs() {
 }
 
 function broadcastQueueUpdate() {
-  const queue = Array.from(runQueue.values()).sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0));
+  const queue = Array.from(runQueue.values()).sort(
+    (a, b) => (b.startedAt || 0) - (a.startedAt || 0),
+  );
   const message = JSON.stringify({
     type: "queue",
     queue,
     timestamp: new Date().toISOString(),
   });
-  console.log(`[WS] Broadcasting queue update to ${clients.size} clients: ${queue.length} runs`);
+  console.log(
+    `[WS] Broadcasting queue update to ${clients.size} clients: ${queue.length} runs`,
+  );
   clients.forEach((client) => {
     if (client.readyState === 1) {
       client.send(message);
@@ -139,19 +149,14 @@ async function runPlaywrightTestAsync(runId, specPath, envVars = {}) {
     // Set per-run report folder so each run has its own report
     const reportFolder = `pw-reports/${runId}`;
 
-    const playwrightProcess = spawn("npm", [
-      "run",
-      "test",
-      "--",
-      specPath,
-    ], {
+    const playwrightProcess = spawn("npm", ["run", "test", "--", specPath], {
       env: {
         ...process.env,
         ...envVars,
         HEADLESS: envVars.HEADLESS ?? "true",
         NODE_OPTIONS: "--import tsx/esm",
         PW_REPORT_FOLDER: reportFolder,
-      }
+      },
     });
 
     playwrightProcess.stdout?.on("data", (data) => {
@@ -178,24 +183,27 @@ async function runPlaywrightTestK8s(runId, specPath, envVars = {}) {
   if (!entry) return;
 
   const spec = path.basename(specPath, ".spec.ts");
-  const jobName = `pw-${spec}-${runId.split("-").pop()}`.toLowerCase().slice(0, 63);
+  const jobName = `pw-${spec}-${runId.split("-").pop()}`
+    .toLowerCase()
+    .slice(0, 63);
 
   try {
-    // Create K8s Job
+    entry.podPhase = "Pending";
     const jobYaml = generateJobYaml(runId, specPath, envVars);
-    execSync(`echo '${jobYaml.replace(/'/g, "'\\''")}'  | kubectl apply -f -`, { encoding: "utf-8" });
+    execSync(`echo '${jobYaml.replace(/'/g, "'\\''")}'  | kubectl apply -f -`, {
+      encoding: "utf-8",
+    });
     entry.k8sJobName = jobName;
     entry.status = "running";
     entry.startedAt = new Date().toISOString();
     broadcastQueueUpdate();
     console.log(`[DASHBOARD] K8s Job created: ${jobName}`);
 
-    // Stream logs from the job
     const interval = setInterval(() => {
       try {
         const logs = execSync(
           `kubectl logs -f job/${jobName} --timestamps=false 2>/dev/null || true`,
-          { encoding: "utf-8", maxBuffer: 10 * 1024 * 1024 }
+          { encoding: "utf-8", maxBuffer: 10 * 1024 * 1024 },
         );
         if (logs) {
           entry.stdout = logs;
@@ -206,23 +214,44 @@ async function runPlaywrightTestK8s(runId, specPath, envVars = {}) {
       }
     }, 2000);
 
-    // Wait for job completion
-    let maxWait = 600; // 10 minutes
+    const phaseCheckInterval = setInterval(() => {
+      try {
+        const podsOutput = execSync(
+          `kubectl get pods -l job-name=${jobName} -o json 2>/dev/null`,
+          { encoding: "utf-8" },
+        );
+        const pods = JSON.parse(podsOutput);
+        if (pods.items && pods.items.length > 0) {
+          const pod = pods.items[0];
+          entry.podPhase = pod.status?.phase || "Unknown";
+          entry.podName = pod.metadata?.name;
+          broadcastQueueUpdate();
+        }
+      } catch (err) {
+        // Pod query might fail if not created yet
+      }
+    }, 1000);
+
+    let maxWait = 600;
     const checkInterval = setInterval(() => {
       try {
         const output = execSync(
           `kubectl get job ${jobName} -o json 2>/dev/null`,
-          { encoding: "utf-8" }
+          { encoding: "utf-8" },
         );
         const job = JSON.parse(output);
         if (job.status?.succeeded > 0 || job.status?.failed > 0) {
           clearInterval(checkInterval);
           clearInterval(interval);
+          clearInterval(phaseCheckInterval);
           entry.status = job.status.succeeded > 0 ? "passed" : "failed";
+          entry.podPhase = job.status.succeeded > 0 ? "Succeeded" : "Failed";
           entry.exitCode = job.status.succeeded > 0 ? 0 : 1;
           entry.completedAt = new Date().toISOString();
           broadcastQueueUpdate();
-          console.log(`[DASHBOARD] K8s Job completed: ${jobName} - ${entry.status}`);
+          console.log(
+            `[DASHBOARD] K8s Job completed: ${jobName} - ${entry.status}`,
+          );
         }
       } catch (err) {
         // Job query failed
@@ -231,14 +260,18 @@ async function runPlaywrightTestK8s(runId, specPath, envVars = {}) {
 
     setTimeout(() => {
       clearInterval(checkInterval);
+      clearInterval(phaseCheckInterval);
       if (entry.status === "running") {
         entry.status = "failed";
+        entry.podPhase = "Failed";
         entry.completedAt = new Date().toISOString();
         broadcastQueueUpdate();
       }
     }, maxWait * 1000);
   } catch (err) {
-    console.error(`[DASHBOARD] K8s Job creation failed: ${err.message}, falling back to local`);
+    console.error(
+      `[DASHBOARD] K8s Job creation failed: ${err.message}, falling back to local`,
+    );
     await runPlaywrightTestAsync(runId, specPath, envVars);
   }
 }
@@ -287,14 +320,14 @@ app.post("/api/dashboard/run", async (req, res) => {
 
   // Run in background
   if (k8sAvailable) {
-    runPlaywrightTestK8s(runId, specPath, envVars).catch(err => {
+    runPlaywrightTestK8s(runId, specPath, envVars).catch((err) => {
       console.error("K8s run failed:", err);
       entry.status = "failed";
       entry.completedAt = new Date().toISOString();
       broadcastQueueUpdate();
     });
   } else {
-    runPlaywrightTestAsync(runId, specPath, envVars).catch(err => {
+    runPlaywrightTestAsync(runId, specPath, envVars).catch((err) => {
       console.error("Test run failed:", err);
       entry.status = "failed";
       entry.completedAt = new Date().toISOString();
@@ -304,8 +337,28 @@ app.post("/api/dashboard/run", async (req, res) => {
 });
 
 app.get("/api/dashboard/queue", async (req, res) => {
-  const queue = Array.from(runQueue.values()).sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0));
+  const queue = Array.from(runQueue.values()).sort(
+    (a, b) => (b.startedAt || 0) - (a.startedAt || 0),
+  );
   res.json({ queue });
+});
+
+app.get("/api/dashboard/queue/stats", async (req, res) => {
+  const queue = Array.from(runQueue.values());
+  const stats = {
+    total: queue.length,
+    queued: queue.filter((q) => q.status === "queued").length,
+    running: queue.filter((q) => q.status === "running").length,
+    passed: queue.filter((q) => q.status === "passed").length,
+    failed: queue.filter((q) => q.status === "failed").length,
+    podPhases: {
+      pending: queue.filter((q) => q.podPhase === "Pending").length,
+      running: queue.filter((q) => q.podPhase === "Running").length,
+      succeeded: queue.filter((q) => q.podPhase === "Succeeded").length,
+      failed: queue.filter((q) => q.podPhase === "Failed").length,
+    },
+  };
+  res.json(stats);
 });
 
 app.get("/api/dashboard/queue/:runId", async (req, res) => {
@@ -329,7 +382,13 @@ app.get("/api/dashboard/report", async (req, res) => {
         await fs.stat(reportFile);
       } catch {
         // Fallback to local path
-        reportFile = path.join(__dirname, "..", "pw-reports", runId, "index.html");
+        reportFile = path.join(
+          __dirname,
+          "..",
+          "pw-reports",
+          runId,
+          "index.html",
+        );
       }
     } else {
       // Latest report
@@ -490,8 +549,12 @@ async function streamK8sUpdates(interval = 3000) {
     try {
       const { execSync } = await import("child_process");
       try {
-        const podsOutput = execSync("kubectl get pods -o json 2>/dev/null", { encoding: "utf-8" });
-        const jobsOutput = execSync("kubectl get jobs -o json 2>/dev/null", { encoding: "utf-8" });
+        const podsOutput = execSync("kubectl get pods -o json 2>/dev/null", {
+          encoding: "utf-8",
+        });
+        const jobsOutput = execSync("kubectl get jobs -o json 2>/dev/null", {
+          encoding: "utf-8",
+        });
 
         const podData = JSON.parse(podsOutput);
         const jobData = JSON.parse(jobsOutput);
@@ -554,17 +617,19 @@ export async function start(port = 4000) {
           type: "connected",
           message: "Dashboard API connected",
           timestamp: new Date().toISOString(),
-        })
+        }),
       );
 
       // Send initial queue state
-      const queue = Array.from(runQueue.values()).sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0));
+      const queue = Array.from(runQueue.values()).sort(
+        (a, b) => (b.startedAt || 0) - (a.startedAt || 0),
+      );
       ws.send(
         JSON.stringify({
           type: "queue",
           queue,
           timestamp: new Date().toISOString(),
-        })
+        }),
       );
 
       ws.on("close", () => {
@@ -581,12 +646,16 @@ export async function start(port = 4000) {
     streamK8sUpdates(3000);
 
     server = httpServer.listen(port, () => {
-      console.log(`🧪 Test Dashboard API listening on http://localhost:${port}`);
+      console.log(
+        `🧪 Test Dashboard API listening on http://localhost:${port}`,
+      );
       console.log(`   - Specs: GET /api/dashboard/specs`);
       console.log(`   - Run test: POST /api/dashboard/run`);
       console.log(`   - Queue: GET /api/dashboard/queue`);
       console.log(`   - Report: GET /api/dashboard/report`);
-      console.log(`   - WebSocket: ws://localhost:${port}/api/dashboard/stream`);
+      console.log(
+        `   - WebSocket: ws://localhost:${port}/api/dashboard/stream`,
+      );
       resolve(server);
     });
   });

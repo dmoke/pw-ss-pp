@@ -12,8 +12,11 @@ RUN npm ci
 # Install Playwright browsers
 RUN npx playwright install --with-deps chromium
 
-# Install xvfb for running headed browser tests (fallback for headless failures)
-RUN apt-get update && apt-get install -y xvfb && rm -rf /var/lib/apt/lists/*
+# Install kubectl for K8s integration and xvfb for headed browser tests
+RUN apt-get update && apt-get install -y xvfb curl && \
+  curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
+  chmod +x kubectl && mv kubectl /usr/local/bin/ && \
+  rm -rf /var/lib/apt/lists/*
 
 # Copy dashboard server and all project files (for test execution)
 COPY dashboard/dashboard-server.js .

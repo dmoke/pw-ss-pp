@@ -38,6 +38,7 @@ services:
       - DOCKER_HOST=unix:///var/run/docker.sock
       - SKIP_WEB_SERVER=true
       - WEB_URL=http://172.19.0.10:3000
+      - KUBECONFIG=/root/.kube/config
     volumes:
       # Test results volumes
       - ./test-results:/app/test-results
@@ -46,6 +47,9 @@ services:
       - ./pw-reports:/app/pw-reports
       - ./dashboard/dashboard-server.js:/app/dashboard-server.js
       # Docker socket for monitoring containers
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Kubernetes config for K8s access
+      - ~/.kube/config:/root/.kube/config:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
       app:

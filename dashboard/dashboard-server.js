@@ -39,9 +39,10 @@ function checkK8sAvailable() {
   try {
     execSync("kubectl version --client", { encoding: "utf-8", stdio: "pipe" });
     k8sAvailable = true;
-    console.log("[DASHBOARD] Kubernetes available");
+    console.log("[DASHBOARD] ✅ Kubernetes available - tests will run in K8s");
   } catch (err) {
     k8sAvailable = false;
+    console.log("[DASHBOARD] ⚠️  Kubernetes NOT available - tests will run locally. Make sure: 1) kubectl is installed 2) minikube is running 3) KUBECONFIG is set");
   }
 }
 
@@ -412,7 +413,21 @@ app.get("/api/dashboard/report", async (req, res) => {
 });
 
 app.get("/api/dashboard/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+  res.json({ 
+    status: "ok", 
+    k8sAvailable,
+    timestamp: new Date().toISOString() 
+  });
+});
+
+app.get("/api/dashboard/k8s/status", (req, res) => {
+  checkK8sAvailable();
+  res.json({ 
+    available: k8sAvailable,
+    message: k8sAvailable 
+      ? "Kubernetes is available - tests will run in K8s" 
+      : "Kubernetes is NOT available - tests will run locally. Check: 1) kubectl installed 2) minikube running 3) KUBECONFIG set"
+  });
 });
 
 app.get("/api/dashboard/docker/status", async (req, res) => {

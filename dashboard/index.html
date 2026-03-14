@@ -772,13 +772,6 @@
                             {activeTab === 'k8s' && (
                                 <div>
                                     <div className="k8s-section">
-                                        <h3>🚀 Scaling: Test Requests → K8s Jobs</h3>
-                                        <p style={{fontSize: '12px', color: '#666', marginBottom: '15px'}}>
-                                            When you request tests, K8s creates a Job for each test run. This demo shows how Kubernetes orchestrates distributed test execution.
-                                        </p>
-                                    </div>
-
-                                    <div className="k8s-section">
                                         <h3>📋 Test Requests with K8s Jobs</h3>
                                         {queue.filter(r => r.k8sJobName).length === 0 ? (
                                             <div style={{fontSize: '13px', color: '#999', padding: '20px', background: '#f8f9fa', borderRadius: '6px'}}>
@@ -896,22 +889,6 @@
                                         )}
                                     </div>
 
-                                    <div className="k8s-section">
-                                        <h3>💡 How to See K8s Scaling in Action</h3>
-                                        <ol style={{fontSize: '13px', color: '#666', marginLeft: '20px', lineHeight: '1.8'}}>
-                                            <li>Start minikube: <code style={{background: '#f0f0f0', padding: '2px 6px'}}>npm run k8s:minikube:start</code></li>
-                                            <li>Deploy to K8s: <code style={{background: '#f0f0f0', padding: '2px 6px'}}>npm run k8s:deploy</code></li>
-                                            <li>Run tests from dashboard (select multiple specs)</li>
-                                            <li>Watch this tab - you'll see:
-                                                <ul style={{marginTop: '8px'}}>
-                                                    <li>Jobs created instantly when tests are requested</li>
-                                                    <li>Pods transitioning: Pending → Running → Succeeded/Failed</li>
-                                                    <li>Multiple jobs running in parallel if you select multiple tests</li>
-                                                    <li>Jobs cleaning up after completion</li>
-                                                </ul>
-                                            </li>
-                                        </ol>
-                                    </div>
                                 </div>
                             )}
                         </div>

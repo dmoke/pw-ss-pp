@@ -5,25 +5,31 @@ A comprehensive Playwright test automation project with **session storage-based 
 ## Quick Start (Choose One)
 
 ### 🏃 Local Development (Fastest)
+
 ```bash
 npm run dev:local
 # Opens: http://localhost:3001
 ```
+
 3 local processes, no Docker overhead. Best for active development.
 
 ### 🐳 Docker Compose (Recommended)
+
 ```bash
 npm run dev:docker
 # Opens: http://localhost:3001
 ```
+
 3 Docker containers, production-like setup, container monitoring in dashboard.
 
 ### ☸️ Kubernetes + Docker (Advanced)
+
 ```bash
 npm run k8s:minikube:start
 npm run dev:docker
 npm run k8s:deploy              # optional, for scaling demo
 ```
+
 See [k8s/README.md](k8s/README.md) for complete guide.
 
 **All open dashboard at http://localhost:3001**
@@ -31,6 +37,7 @@ See [k8s/README.md](k8s/README.md) for complete guide.
 ## Running Tests
 
 ### Via Dashboard (Recommended)
+
 1. Start dashboard: `npm run dev:docker`
 2. Open **http://localhost:3001**
 3. Select test specs from sidebar
@@ -43,14 +50,19 @@ See [k8s/README.md](k8s/README.md) for complete guide.
    - 📈 Run history
 
 ### Dashboard Tabs
+
 - **Execution Logs** - Real-time test output
 - **Test Results** - Pass/fail breakdown
 - **🐳 Containers** - Docker container status + logs
-- **☸️ Kubernetes** - K8s pods and jobs (when scaling)
+- **☸️ Kubernetes** - K8s pod scaling monitor with real-time queue visualization
+  - 📊 Queue & Scaling Monitor: Live counters for Queued, Pending, Running, Succeeded, Failed
+  - 🎯 Test Timeline: Visual lifecycle of each test (Queued → Pending → Running → Succeeded/Failed)
+  - 💡 Educational Tooltips: Learn K8s concepts as you watch pods scale
 - **Run History** - Past test runs
 - **HTML Report** - Full Playwright analytics
 
 ### Via Command Line
+
 ```bash
 npm test                 # All tests, all workers
 npm run test:auth       # Auth tests only
@@ -158,10 +170,10 @@ All test accounts have valid credentials:
 
 ## Credentials
 
-| Username | Password |
-|----------|----------|
-| student | Password123 |
-| testuser1-9 | Test@1234 |
+| Username    | Password    |
+| ----------- | ----------- |
+| student     | Password123 |
+| testuser1-9 | Test@1234   |
 
 ## Common Commands
 
@@ -188,14 +200,14 @@ npm run port:kill:all          # Clear stuck ports
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
+| Issue                               | Solution                                                              |
+| ----------------------------------- | --------------------------------------------------------------------- |
 | Cannot access http://localhost:3001 | Ensure dashboard running: `npm run dev:docker` or `npm run dev:local` |
-| "Port already in use" | Run `npm run port:kill:all` |
-| Tests can't login | Check credentials in `src/test-data/accounts.ts` |
-| Session expired | Delete `.auth/` folder to force re-login |
-| Playwright not found | Run `npx playwright install` |
-| Docker won't start | Check logs: `npm run dev:docker:logs` |
+| "Port already in use"               | Run `npm run port:kill:all`                                           |
+| Tests can't login                   | Check credentials in `src/test-data/accounts.ts`                      |
+| Session expired                     | Delete `.auth/` folder to force re-login                              |
+| Playwright not found                | Run `npx playwright install`                                          |
+| Docker won't start                  | Check logs: `npm run dev:docker:logs`                                 |
 
 ## How It Works
 
@@ -228,14 +240,14 @@ pw-ss-pp/
 
 ## API Endpoints
 
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| GET | `/api/dashboard/health` | Health check |
-| GET | `/api/dashboard/specs` | List test specs |
-| POST | `/api/dashboard/run` | Execute tests |
-| GET | `/api/dashboard/results` | Get latest results |
-| GET | `/api/dashboard/report` | Get HTML report |
-| GET | `/api/dashboard/history` | Get run history |
+| Method | Endpoint                 | Purpose            |
+| ------ | ------------------------ | ------------------ |
+| GET    | `/api/dashboard/health`  | Health check       |
+| GET    | `/api/dashboard/specs`   | List test specs    |
+| POST   | `/api/dashboard/run`     | Execute tests      |
+| GET    | `/api/dashboard/results` | Get latest results |
+| GET    | `/api/dashboard/report`  | Get HTML report    |
+| GET    | `/api/dashboard/history` | Get run history    |
 
 ## How It Works: 3 Layers
 
@@ -258,6 +270,7 @@ pw-ss-pp/
 ```
 
 **Startup Order (automatic)**:
+
 1. App (3000) - the target being tested
 2. API (4000) - test orchestrator, waits for app healthy
 3. UI (3001) - waits for API healthy

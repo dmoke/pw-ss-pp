@@ -310,6 +310,8 @@ app.post("/api/dashboard/run", async (req, res) => {
     startedAt: null,
     completedAt: null,
     envVars,
+    podPhase: null,
+    podName: null,
   };
 
   runQueue.set(runId, entry);

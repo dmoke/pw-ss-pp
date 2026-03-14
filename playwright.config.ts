@@ -7,6 +7,8 @@ dotenv.config({ path: `./config/${process.env.ENVIRONMENT}.env`, override: false
 
 const headlessConfig = process.env.HEADLESS !== "false";
 const baseURL = process.env.WEB_URL || "http://localhost:3000";
+// Allow per-run report output via env var (e.g., "pw-reports/run-id-20240314-120000")
+const reportFolder = process.env.PW_REPORT_FOLDER || "pw-report-html";
 
 export default defineConfig({
   testDir: "./tests",
@@ -15,7 +17,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 5, // One worker per test account
   reporter: [
-    ["html", { open: "never", outputFolder: "pw-report-html" }],
+    ["html", { open: "never", outputFolder: reportFolder }],
     [
       "junit",
       { outputFile: "report/generatedReports/desktop/combined-desktop.xml" },

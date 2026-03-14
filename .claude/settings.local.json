@@ -3,7 +3,17 @@
     "allow": [
       "Bash(ls -la *.md)",
       "Bash(curl -s http://localhost:4000/api/dashboard/results)",
-      "Bash(curl -s -X POST http://localhost:4000/api/dashboard/run -H 'Content-Type: application/json' -d '{\"\"\"\"specPath\"\"\"\": \"\"\"\"tests/admin.spec.ts\"\"\"\", \"\"\"\"env\"\"\"\": {\"\"\"\"ENVIRONMENT\"\"\"\": \"\"\"\"prod\"\"\"\", \"\"\"\"HEADLESS\"\"\"\": \"\"\"\"true\"\"\"\"}}')"
+      "Bash(curl -s -X POST http://localhost:4000/api/dashboard/run -H 'Content-Type: application/json' -d '{\"\"\"\"specPath\"\"\"\": \"\"\"\"tests/admin.spec.ts\"\"\"\", \"\"\"\"env\"\"\"\": {\"\"\"\"ENVIRONMENT\"\"\"\": \"\"\"\"prod\"\"\"\", \"\"\"\"HEADLESS\"\"\"\": \"\"\"\"true\"\"\"\"}}')",
+      "Bash(docker-compose restart:*)",
+      "Bash(docker-compose down:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(curl -s http://localhost:4000/api/dashboard/specs)",
+      "Bash(docker exec:*)",
+      "Bash(curl -s -X POST http://localhost:4000/api/dashboard/run -H \"Content-Type: application/json\" -d '{\"\"\"\"specPath\"\"\"\": \"\"\"\"tests/admin.spec.ts\"\"\"\"}')",
+      "Bash(curl -s http://localhost:4000/api/dashboard/queue)",
+      "Bash(curl -s -X POST http://localhost:4000/api/dashboard/run -H \"Content-Type: application/json\" -d '{\"\"\"\"specPath\"\"\"\": \"\"\"\"tests/api.spec.ts\"\"\"\"}')",
+      "Bash(curl -s -X POST http://localhost:4000/api/dashboard/run -H \"Content-Type: application/json\" -d '{\"\"\"\"specPath\"\"\"\": \"\"\"\"tests/auth.spec.ts\"\"\"\"}')",
+      "Bash(curl -s -X POST http://localhost:4000/api/dashboard/run -H \"Content-Type: application/json\" -d '{\"\"specPath\"\": \"\"tests/admin.spec.ts\"\"}')"
     ]
   }
 }

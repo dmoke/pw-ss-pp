@@ -218,8 +218,9 @@ pw-ss-pp/
 ├── src/fixtures/          # Test fixtures
 ├── src/pages/             # Page objects
 ├── src/api/               # API helpers
-├── dashboard-server.js    # Test orchestration API
-├── dashboard/             # Dashboard UI
+├── dashboard/
+│   ├── dashboard-server.js # Test orchestration API
+│   └── index.html          # Dashboard UI
 ├── playwright.config.ts   # Config
 └── site/
     └── server.js          # Demo app

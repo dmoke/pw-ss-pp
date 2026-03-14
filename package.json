@@ -15,7 +15,7 @@
     "test:api": "playwright test tests/api.spec.ts",
     "test:report": "playwright show-report pw-report-html",
     "app:start": "node site/server.js",
-    "dashboard:api:start": "node dashboard-server.js",
+    "dashboard:api:start": "node dashboard/dashboard-server.js",
     "dashboard:ui:start": "http-server dashboard -p 3001",
     "dev:local": "concurrently \"npm run app:start\" \"npm run dashboard:api:start\" \"npm run dashboard:ui:start\"",
     "dev:docker": "docker-compose up -d",

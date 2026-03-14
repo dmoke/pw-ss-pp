@@ -43,7 +43,8 @@ services:
       - ./test-results:/app/test-results
       - ./pw-report-json:/app/pw-report-json
       - ./pw-report-html:/app/pw-report-html
-      - ./dashboard-server.js:/app/dashboard-server.js
+      - ./pw-reports:/app/pw-reports
+      - ./dashboard/dashboard-server.js:/app/dashboard-server.js
       # Docker socket for monitoring containers
       - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:

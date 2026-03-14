@@ -16,7 +16,7 @@ RUN npx playwright install --with-deps chromium
 RUN apt-get update && apt-get install -y xvfb && rm -rf /var/lib/apt/lists/*
 
 # Copy dashboard server and all project files (for test execution)
-COPY dashboard-server.js .
+COPY dashboard/dashboard-server.js .
 COPY tsconfig.json .
 COPY tests ./tests
 COPY playwright.config.ts .
@@ -26,6 +26,7 @@ COPY hooks ./hooks
 COPY site ./site
 COPY pw-report-json ./pw-report-json
 COPY pw-report-html ./pw-report-html
+COPY pw-reports ./pw-reports
 COPY test-results ./test-results
 COPY config ./config
 COPY .env* ./

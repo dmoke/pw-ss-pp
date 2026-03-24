@@ -31,7 +31,7 @@ services:
       context: .
       dockerfile: Dockerfile.dashboard
     ports:
-      - "4000:4000"
+      - "${DASHBOARD_API_PORT:-4000}:4000"
     environment:
       - NODE_ENV=development
       - DASHBOARD_PORT=4000

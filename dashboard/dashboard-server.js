@@ -33,16 +33,77 @@ app.use((req, res, next) => {
 
 // ============ RUN QUEUE ============
 const runQueue = new Map(); // runId → { runId, spec, specPath, status, stdout, stderr, exitCode, startedAt, completedAt, envVars, k8sJobName?, podPhase?, podName? }
+const MAX_CONCURRENT_K8S_RUNS = Number(
+  process.env.MAX_CONCURRENT_K8S_RUNS || 2,
+);
+const K8S_JOB_CPU_REQUEST = process.env.K8S_JOB_CPU_REQUEST || "300m";
+const K8S_JOB_CPU_LIMIT = process.env.K8S_JOB_CPU_LIMIT || "1";
+const K8S_JOB_MEMORY_REQUEST = process.env.K8S_JOB_MEMORY_REQUEST || "512Mi";
+const K8S_JOB_MEMORY_LIMIT = process.env.K8S_JOB_MEMORY_LIMIT || "1Gi";
 let k8sAvailable = false;
+let k8sProvider = "unknown";
+let k8sContext = "unknown";
+
+function getRunningK8sRuns() {
+  return Array.from(runQueue.values()).filter(
+    (r) => r.status === "creating-job" || r.status === "running",
+  ).length;
+}
+
+function startQueuedRuns() {
+  const canStart = MAX_CONCURRENT_K8S_RUNS - getRunningK8sRuns();
+  if (canStart <= 0) return;
+
+  const queuedRuns = Array.from(runQueue.values())
+    .filter((r) => r.status === "queued")
+    .slice(0, canStart);
+
+  queuedRuns.forEach((run) => {
+    run.status = "creating-job";
+    run.startedAt = run.startedAt || new Date().toISOString();
+    broadcastQueueUpdate();
+    runPlaywrightTestK8s(run.runId, run.specPath, run.envVars || {}).catch(
+      (err) => {
+        console.error("Queued K8s run failed:", err.message);
+        run.status = "failed";
+        run.completedAt = new Date().toISOString();
+        broadcastQueueUpdate();
+      },
+    );
+  });
+}
 
 function checkK8sAvailable() {
   try {
     execSync("kubectl version --client", { encoding: "utf-8", stdio: "pipe" });
+    const context = execSync("kubectl config current-context", {
+      encoding: "utf-8",
+      stdio: "pipe",
+    }).trim();
+    k8sContext = context || "default";
+    k8sProvider = "unknown";
+
+    try {
+      const driverOutput = execSync("minikube status --format '{{.Host}}'", {
+        encoding: "utf-8",
+        stdio: "pipe",
+      }).trim();
+      if (driverOutput) {
+        k8sProvider = `minikube (${driverOutput})`;
+      }
+    } catch {
+      k8sProvider = "kubectl";
+    }
+
     k8sAvailable = true;
     console.log("[DASHBOARD] ✅ Kubernetes available - tests will run in K8s");
   } catch (err) {
     k8sAvailable = false;
-    console.log("[DASHBOARD] ⚠️  Kubernetes NOT available - tests will run locally. Make sure: 1) kubectl is installed 2) minikube is running 3) KUBECONFIG is set");
+    k8sProvider = "none";
+    k8sContext = "none";
+    console.log(
+      "[DASHBOARD] ⚠️  Kubernetes NOT available - tests will run locally. Make sure: 1) kubectl is installed 2) minikube is running 3) KUBECONFIG is set",
+    );
   }
 }
 
@@ -82,6 +143,13 @@ ${envLines}
           value: "true"
         - name: NODE_OPTIONS
           value: "--import tsx/esm"
+        resources:
+          requests:
+            cpu: "${K8S_JOB_CPU_REQUEST}"
+            memory: "${K8S_JOB_MEMORY_REQUEST}"
+          limits:
+            cpu: "${K8S_JOB_CPU_LIMIT}"
+            memory: "${K8S_JOB_MEMORY_LIMIT}"
         volumeMounts:
         - name: test-results
           mountPath: /app/test-results
@@ -175,6 +243,9 @@ async function runPlaywrightTestAsync(runId, specPath, envVars = {}) {
       entry.completedAt = new Date().toISOString();
       broadcastQueueUpdate();
       console.log(`[DASHBOARD] Test run completed: ${runId} - ${entry.status}`);
+      if (k8sAvailable) {
+        startQueuedRuns();
+      }
     });
   });
 }
@@ -190,13 +261,15 @@ async function runPlaywrightTestK8s(runId, specPath, envVars = {}) {
 
   try {
     entry.podPhase = "Pending";
+    entry.status = "creating-job";
+    entry.startedAt = new Date().toISOString();
+    broadcastQueueUpdate();
     const jobYaml = generateJobYaml(runId, specPath, envVars);
     execSync(`echo '${jobYaml.replace(/'/g, "'\\''")}'  | kubectl apply -f -`, {
       encoding: "utf-8",
     });
     entry.k8sJobName = jobName;
     entry.status = "running";
-    entry.startedAt = new Date().toISOString();
     broadcastQueueUpdate();
     console.log(`[DASHBOARD] K8s Job created: ${jobName}`);
 
@@ -253,6 +326,7 @@ async function runPlaywrightTestK8s(runId, specPath, envVars = {}) {
           console.log(
             `[DASHBOARD] K8s Job completed: ${jobName} - ${entry.status}`,
           );
+          startQueuedRuns();
         }
       } catch (err) {
         // Job query failed
@@ -318,18 +392,14 @@ app.post("/api/dashboard/run", async (req, res) => {
   runQueue.set(runId, entry);
   broadcastQueueUpdate();
 
-  // Respond immediately
+  // Immediate response
   res.json({ success: true, result: { runId, status: "queued" } });
 
-  // Run in background
+  // Start queued runs under concurrency limits
   if (k8sAvailable) {
-    runPlaywrightTestK8s(runId, specPath, envVars).catch((err) => {
-      console.error("K8s run failed:", err);
-      entry.status = "failed";
-      entry.completedAt = new Date().toISOString();
-      broadcastQueueUpdate();
-    });
+    startQueuedRuns();
   } else {
+    // local runner can run directly
     runPlaywrightTestAsync(runId, specPath, envVars).catch((err) => {
       console.error("Test run failed:", err);
       entry.status = "failed";
@@ -413,20 +483,37 @@ app.get("/api/dashboard/report", async (req, res) => {
 });
 
 app.get("/api/dashboard/health", (req, res) => {
-  res.json({ 
-    status: "ok", 
+  res.json({
+    status: "ok",
     k8sAvailable,
-    timestamp: new Date().toISOString() 
+    timestamp: new Date().toISOString(),
   });
 });
 
 app.get("/api/dashboard/k8s/status", (req, res) => {
   checkK8sAvailable();
-  res.json({ 
+  res.json({
     available: k8sAvailable,
-    message: k8sAvailable 
-      ? "Kubernetes is available - tests will run in K8s" 
-      : "Kubernetes is NOT available - tests will run locally. Check: 1) kubectl installed 2) minikube running 3) KUBECONFIG set"
+    message: k8sAvailable
+      ? "Kubernetes is available - tests will run in K8s"
+      : "Kubernetes is NOT available - tests will run locally. Check: 1) kubectl installed 2) minikube running 3) KUBECONFIG set",
+  });
+});
+
+app.get("/api/dashboard/k8s/info", (req, res) => {
+  checkK8sAvailable();
+  res.json({
+    available: k8sAvailable,
+    provider: k8sProvider,
+    context: k8sContext,
+    maxConcurrent: MAX_CONCURRENT_K8S_RUNS,
+    jobCpuRequest: K8S_JOB_CPU_REQUEST,
+    jobCpuLimit: K8S_JOB_CPU_LIMIT,
+    jobMemoryRequest: K8S_JOB_MEMORY_REQUEST,
+    jobMemoryLimit: K8S_JOB_MEMORY_LIMIT,
+    message: k8sAvailable
+      ? `K8s cluster found in context ${k8sContext} (${k8sProvider})`
+      : "No Kubernetes cluster available",
   });
 });
 
@@ -595,10 +682,56 @@ async function streamK8sUpdates(interval = 3000) {
           createdAt: job.metadata.creationTimestamp,
         }));
 
+        let nodeResources = [];
+        let metricsSource = "top";
+        try {
+          const topNodes = execSync(
+            "kubectl top nodes --no-headers 2>/dev/null",
+            {
+              encoding: "utf-8",
+            },
+          ).trim();
+          nodeResources = topNodes
+            .split("\n")
+            .filter(Boolean)
+            .map((line) => {
+              const parts = line.trim().split(/\s+/);
+              return {
+                node: parts[0],
+                cpu: parts[1],
+                memory: parts[2],
+                source: "top",
+              };
+            });
+        } catch {
+          metricsSource = "capacity";
+          try {
+            const nodesJson = execSync(
+              "kubectl get nodes -o json 2>/dev/null",
+              { encoding: "utf-8" },
+            );
+            const nodesData = JSON.parse(nodesJson);
+            nodeResources = (nodesData.items || []).map((node) => {
+              const cpu = node.status?.capacity?.cpu || "unknown";
+              const memory = node.status?.capacity?.memory || "unknown";
+              return {
+                node: node.metadata?.name || "unknown",
+                cpu: cpu,
+                memory: memory,
+                source: "capacity",
+              };
+            });
+          } catch {
+            nodeResources = [];
+          }
+        }
+
         const message = JSON.stringify({
           type: "k8s",
           pods,
           jobs,
+          nodeResources,
+          metricsSource,
           timestamp: new Date().toISOString(),
         });
 

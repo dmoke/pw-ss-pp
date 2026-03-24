@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: dashboard-api
-        image: pw-ss-pp:latest
+        image: pw-ss-pp-dashboard-api:latest
         imagePullPolicy: Never
         command: ["node", "dashboard-server.js"]
         ports:

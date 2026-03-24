@@ -278,6 +278,11 @@
         color: #991b1b;
       }
 
+      .run-status-badge.creating-job {
+        background: #e9d5ff;
+        color: #6d28d9;
+      }
+
       .run-meta {
         font-size: 12px;
         color: #999;
@@ -394,6 +399,11 @@
 
       .timeline-dot.pending {
         background: #f59e0b;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      .timeline-dot.creating-job {
+        background: #a855f7;
         animation: pulse 1.5s ease-in-out infinite;
       }
 
@@ -525,6 +535,19 @@
         const [reportRunId, setReportRunId] = useState(null);
         const [k8sPods, setK8sPods] = useState([]);
         const [k8sJobs, setK8sJobs] = useState([]);
+        const [k8sNodeResources, setK8sNodeResources] = useState([]);
+        const [k8sInfo, setK8sInfo] = useState({
+          available: false,
+          provider: "unknown",
+          context: "unknown",
+          message: "Unknown",
+        });
+        const nodeMetricsSource =
+          k8sNodeResources?.[0]?.source === "capacity"
+            ? "node capacity"
+            : k8sNodeResources?.[0]?.source === "top"
+              ? "kubectl top"
+              : "unknown";
         const [containers, setContainers] = useState([]);
         const [loading, setLoading] = useState(true);
 
@@ -544,6 +567,20 @@
             .catch((err) => {
               console.error("Error fetching specs:", err);
               setLoading(false);
+            });
+        }, []);
+
+        useEffect(() => {
+          fetch(`${API_URL}/k8s/info`)
+            .then((r) => r.json())
+            .then((info) => setK8sInfo(info))
+            .catch(() => {
+              setK8sInfo({
+                available: false,
+                provider: "unknown",
+                context: "unknown",
+                message: "Cannot query Kubernetes info",
+              });
             });
         }, []);
 
@@ -572,6 +609,7 @@
             } else if (data.type === "k8s") {
               setK8sPods(data.pods || []);
               setK8sJobs(data.jobs || []);
+              setK8sNodeResources(data.nodeResources || []);
             }
           };
 
@@ -630,6 +668,10 @@
 
         const getPodPhaseColor = (phase) => {
           switch (phase) {
+            case "Queued":
+              return "#fbbf24";
+            case "Creating Job":
+              return "#a855f7";
             case "Pending":
               return "#f59e0b";
             case "Running":
@@ -648,17 +690,27 @@
           if (run.status === "queued") {
             return phases;
           }
-          phases.push(run.podPhase || "Running");
+          if (run.status === "creating-job") {
+            phases.push("Creating Job");
+            phases.push("Pending");
+            phases.push("Running");
+          } else {
+            phases.push(run.podPhase || "Pending");
+            if (run.podPhase === "Running") {
+              phases.push("Running");
+            }
+          }
           if (run.status === "passed" || run.status === "failed") {
             phases.push(run.status === "passed" ? "Succeeded" : "Failed");
           }
-          return phases;
+          return Array.from(new Set(phases));
         };
 
         const getPhaseTooltip = (phase) => {
           const tooltips = {
-            Queued: "Test waiting for pod allocation",
-            Pending: "Kubernetes allocating resources",
+            Queued: "Test waiting for test creation",
+            "Creating Job": "Submitting Kubernetes Job for this test",
+            Pending: "Kubernetes scheduling pod",
             Running: "Test executing in pod",
             Succeeded: "Test passed, pod cleaning up",
             Failed: "Test failed or pod error",
@@ -841,6 +893,28 @@
                               <div className="run-meta">
                                 {run.startedAt &&
                                   new Date(run.startedAt).toLocaleTimeString()}
+                                {run.k8sJobName && (
+                                  <div
+                                    style={{
+                                      marginTop: "3px",
+                                      fontSize: "11px",
+                                      color: "#555",
+                                    }}
+                                  >
+                                    Job: {run.k8sJobName}
+                                  </div>
+                                )}
+                                {run.podName && (
+                                  <div
+                                    style={{
+                                      marginTop: "3px",
+                                      fontSize: "11px",
+                                      color: "#555",
+                                    }}
+                                  >
+                                    Pod: {run.podName}
+                                  </div>
+                                )}
                               </div>
 
                               {expandedRun === run.runId && run.stdout && (
@@ -899,6 +973,28 @@
                             <div className="run-meta">
                               {run.startedAt &&
                                 new Date(run.startedAt).toLocaleTimeString()}
+                              {run.k8sJobName && (
+                                <div
+                                  style={{
+                                    marginTop: "3px",
+                                    fontSize: "11px",
+                                    color: "#555",
+                                  }}
+                                >
+                                  Job: {run.k8sJobName}
+                                </div>
+                              )}
+                              {run.podName && (
+                                <div
+                                  style={{
+                                    marginTop: "3px",
+                                    fontSize: "11px",
+                                    color: "#555",
+                                  }}
+                                >
+                                  Pod: {run.podName}
+                                </div>
+                              )}
                               {(run.status === "passed" ||
                                 run.status === "failed") &&
                                 run.completedAt && (
@@ -1027,66 +1123,69 @@
                 {activeTab === "k8s" && (
                   <div>
                     <div className="k8s-section">
-                      <h3>📊 Queue & Scaling Monitor</h3>
-                      <p
+                      <h3>☸️ K8s Live Monitor</h3>
+                      <div
                         style={{
+                          marginBottom: "12px",
                           fontSize: "12px",
-                          color: "#666",
-                          marginBottom: "16px",
+                          color: "#333",
+                          background: "#f3f4f6",
+                          borderRadius: "6px",
+                          padding: "10px",
                         }}
                       >
-                        Real-time view of test queue and Kubernetes pod scaling
-                      </p>
+                        <strong>Cluster:</strong>{" "}
+                        {k8sInfo.available ? "Connected" : "Disconnected"} •{" "}
+                        <strong>Context:</strong> {k8sInfo.context} •{" "}
+                        <strong>Provider:</strong> {k8sInfo.provider}
+                        <div
+                          style={{
+                            marginTop: "4px",
+                            fontSize: "11px",
+                            color: "#555",
+                          }}
+                        >
+                          Max concurrent K8s runs:{" "}
+                          {k8sInfo.maxConcurrent || "-"} • CPU{" "}
+                          {k8sInfo.jobCpuRequest} / {k8sInfo.jobCpuLimit} • RAM{" "}
+                          {k8sInfo.jobMemoryRequest} / {k8sInfo.jobMemoryLimit}
+                        </div>
+                      </div>
 
                       <div className="queue-stats">
                         <div
                           className="queue-stat-card"
-                          style={{
-                            background:
-                              "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-                          }}
+                          style={{ background: "#fef3c7" }}
                         >
                           <div className="queue-stat-number">
                             {queue.filter((r) => r.status === "queued").length}
                           </div>
-                          <div className="queue-stat-label">Queued</div>
+                          <div className="queue-stat-label">Queued tests</div>
                         </div>
                         <div
                           className="queue-stat-card"
-                          style={{
-                            background:
-                              "linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)",
-                          }}
+                          style={{ background: "#dbeafe" }}
                         >
                           <div className="queue-stat-number">
                             {
-                              queue.filter(
-                                (r) =>
-                                  r.status === "running" ||
-                                  r.podPhase === "Running",
-                              ).length
+                              k8sPods.filter((p) => p.phase === "Running")
+                                .length
                             }
                           </div>
-                          <div className="queue-stat-label">Running Pods</div>
+                          <div className="queue-stat-label">Running pods</div>
                         </div>
                         <div
                           className="queue-stat-card"
-                          style={{
-                            background:
-                              "linear-gradient(135deg, #10b981 0%, #047857 100%)",
-                          }}
+                          style={{ background: "#dcfce7" }}
                         >
                           <div className="queue-stat-number">
                             {queue.filter((r) => r.status === "passed").length}
                           </div>
-                          <div className="queue-stat-label">Succeeded</div>
+                          <div className="queue-stat-label">Passed</div>
                         </div>
                         <div
                           className="queue-stat-card"
-                          style={{
-                            background:
-                              "linear-gradient(135deg, #ef4444 0%, #991b1b 100%)",
-                          }}
+                          style={{ background: "#fee2e2" }}
                         >
                           <div className="queue-stat-number">
                             {queue.filter((r) => r.status === "failed").length}
@@ -1095,341 +1194,174 @@
                         </div>
                       </div>
 
-                      {queue.filter((r) => r.k8sJobName).length > 0 && (
-                        <div style={{ marginBottom: "30px" }}>
-                          <h4
-                            style={{
-                              fontSize: "13px",
-                              fontWeight: "600",
-                              marginBottom: "12px",
-                              color: "#333",
-                            }}
-                          >
-                            Test Timeline
-                          </h4>
-                          <div className="queue-stack">
-                            {queue
-                              .filter((r) => r.k8sJobName)
-                              .map((run) => {
-                                const phases = getQueuePhaseSequence(run);
-                                let currentPhaseIdx = 0;
-                                if (run.status === "queued") {
-                                  currentPhaseIdx = 0;
-                                } else if (
-                                  run.status === "passed" ||
-                                  run.status === "failed"
-                                ) {
-                                  currentPhaseIdx = phases.length - 1;
-                                } else if (run.podPhase === "Pending") {
-                                  currentPhaseIdx = 1;
-                                } else if (run.podPhase === "Running") {
-                                  currentPhaseIdx = 1;
-                                }
-
-                                return (
-                                  <div key={run.runId} className="queue-item">
-                                    <div
-                                      style={{
-                                        minWidth: "80px",
-                                        fontWeight: "500",
-                                        fontSize: "12px",
-                                        color: "#333",
-                                      }}
-                                    >
-                                      {run.spec}
-                                    </div>
-                                    <div className="queue-timeline">
-                                      {phases.map((phase, idx) => (
-                                        <React.Fragment key={phase}>
-                                          <div
-                                            className="queue-tooltip"
-                                            data-tooltip={getPhaseTooltip(
-                                              phase,
-                                            )}
-                                          >
-                                            <div
-                                              className={`timeline-dot ${phase.toLowerCase()}`}
-                                              style={{
-                                                background:
-                                                  getPodPhaseColor(phase),
-                                                opacity:
-                                                  idx <= currentPhaseIdx
-                                                    ? 1
-                                                    : 0.3,
-                                              }}
-                                            />
-                                            <span
-                                              style={{
-                                                fontSize: "10px",
-                                                marginLeft: "2px",
-                                                color:
-                                                  idx <= currentPhaseIdx
-                                                    ? "#333"
-                                                    : "#aaa",
-                                              }}
-                                            >
-                                              {phase}
-                                            </span>
-                                          </div>
-                                          {idx < phases.length - 1 && (
-                                            <div
-                                              className="timeline-connector"
-                                              style={{
-                                                opacity:
-                                                  idx < currentPhaseIdx
-                                                    ? 1
-                                                    : 0.3,
-                                              }}
-                                            />
-                                          )}
-                                        </React.Fragment>
-                                      ))}
-                                    </div>
-                                    <div
-                                      style={{
-                                        fontSize: "11px",
-                                        color: "#999",
-                                        marginLeft: "8px",
-                                        minWidth: "50px",
-                                        textAlign: "right",
-                                      }}
-                                    >
-                                      {run.completedAt && run.startedAt
-                                        ? `${((new Date(run.completedAt) - new Date(run.startedAt)) / 1000).toFixed(1)}s`
-                                        : run.startedAt
-                                          ? `${Math.floor((Date.now() - new Date(run.startedAt)) / 1000)}s`
-                                          : "-"}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                          </div>
+                      <div style={{ marginTop: "18px", marginBottom: "14px" }}>
+                        <div style={{ fontWeight: 600, marginBottom: "6px" }}>
+                          K8s status at a glance
                         </div>
-                      )}
-                    </div>
-
-                    <div className="k8s-section">
-                      <h3>📋 Test Requests with K8s Jobs</h3>
-                      {queue.filter((r) => r.k8sJobName).length === 0 ? (
                         <div
                           style={{
-                            fontSize: "13px",
-                            color: "#999",
-                            padding: "20px",
-                            background: "#f8f9fa",
-                            borderRadius: "6px",
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr",
+                            gap: "8px",
+                            fontSize: "12px",
                           }}
                         >
-                          <div>No K8s jobs created yet</div>
                           <div
                             style={{
-                              fontSize: "11px",
-                              marginTop: "8px",
-                              color: "#ccc",
+                              background: "#f9fafb",
+                              border: "1px solid #e5e7eb",
+                              borderRadius: "6px",
+                              padding: "8px",
                             }}
                           >
-                            To see K8s in action, start minikube and run tests
+                            <div style={{ fontSize: "11px", color: "#6b7280" }}>
+                              Queued jobs
+                            </div>
+                            <div style={{ fontWeight: 700 }}>
+                              {
+                                queue.filter((r) => r.status === "queued")
+                                  .length
+                              }
+                            </div>
+                          </div>
+                          <div
+                            style={{
+                              background: "#f9fafb",
+                              border: "1px solid #e5e7eb",
+                              borderRadius: "6px",
+                              padding: "8px",
+                            }}
+                          >
+                            <div style={{ fontSize: "11px", color: "#6b7280" }}>
+                              Sched pending
+                            </div>
+                            <div style={{ fontWeight: 700 }}>
+                              {
+                                k8sPods.filter((p) => p.phase === "Pending")
+                                  .length
+                              }
+                            </div>
+                          </div>
+                          <div
+                            style={{
+                              background: "#f9fafb",
+                              border: "1px solid #e5e7eb",
+                              borderRadius: "6px",
+                              padding: "8px",
+                            }}
+                          >
+                            <div style={{ fontSize: "11px", color: "#6b7280" }}>
+                              Pods active
+                            </div>
+                            <div style={{ fontWeight: 700 }}>
+                              {
+                                k8sPods.filter((p) => p.phase === "Running")
+                                  .length
+                              }
+                            </div>
+                          </div>
+                          <div
+                            style={{
+                              background: "#f9fafb",
+                              border: "1px solid #e5e7eb",
+                              borderRadius: "6px",
+                              padding: "8px",
+                            }}
+                          >
+                            <div style={{ fontSize: "11px", color: "#6b7280" }}>
+                              Terminated
+                            </div>
+                            <div style={{ fontWeight: 700 }}>
+                              {
+                                k8sPods.filter(
+                                  (p) =>
+                                    p.phase === "Succeeded" ||
+                                    p.phase === "Failed",
+                                ).length
+                              }
+                            </div>
                           </div>
                         </div>
-                      ) : (
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>Test Spec</th>
-                              <th>K8s Job Name</th>
-                              <th>Status</th>
-                              <th>Started</th>
-                              <th>Duration</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {queue
-                              .filter((r) => r.k8sJobName)
-                              .map((r) => (
-                                <tr key={r.runId}>
-                                  <td>
-                                    <strong>{r.spec}</strong>
-                                  </td>
-                                  <td
-                                    style={{
-                                      fontFamily: "monospace",
-                                      fontSize: "12px",
-                                    }}
-                                  >
-                                    {r.k8sJobName}
-                                  </td>
-                                  <td>
-                                    <span
-                                      className={`run-status-badge ${r.status}`}
-                                    >
-                                      {r.status}
-                                    </span>
-                                  </td>
-                                  <td>
-                                    {r.startedAt
-                                      ? new Date(
-                                          r.startedAt,
-                                        ).toLocaleTimeString()
-                                      : "-"}
-                                  </td>
-                                  <td>
-                                    {r.completedAt
-                                      ? `${(new Date(r.completedAt) - new Date(r.startedAt)) / 1000}s`
-                                      : r.startedAt
-                                        ? `${Math.floor((Date.now() - new Date(r.startedAt)) / 1000)}s`
-                                        : "-"}
-                                  </td>
-                                </tr>
-                              ))}
-                          </tbody>
-                        </table>
-                      )}
-                    </div>
+                      </div>
 
-                    <div className="k8s-section">
-                      <h3>🔧 K8s Pods (from running Jobs)</h3>
-                      <p
-                        style={{
-                          fontSize: "12px",
-                          color: "#666",
-                          marginBottom: "12px",
-                        }}
-                      >
-                        Pods execute the actual Playwright tests. Lifecycle:
-                        Pending → Running → Succeeded/Failed
-                      </p>
-                      {k8sPods.length === 0 ? (
-                        <div style={{ fontSize: "13px", color: "#999" }}>
-                          No pods yet
+                      <div style={{ marginBottom: "14px" }}>
+                        <div style={{ fontWeight: 600, marginBottom: "6px" }}>
+                          Node metrics ({nodeMetricsSource})
                         </div>
-                      ) : (
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>Pod Name</th>
-                              <th>Phase</th>
-                              <th>Namespace</th>
-                              <th>Created</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {k8sPods.map((p) => (
-                              <tr
-                                key={p.name}
+                        {k8sNodeResources.length > 0 ? (
+                          <div
+                            style={{
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: "8px",
+                              fontSize: "12px",
+                            }}
+                          >
+                            {k8sNodeResources.map((n) => (
+                              <div
+                                key={n.node}
                                 style={{
-                                  opacity: p.phase === "Succeeded" ? 0.6 : 1,
+                                  background: "#f3f4f6",
+                                  borderRadius: "6px",
+                                  padding: "8px",
+                                  border: "1px solid #e5e7eb",
                                 }}
                               >
-                                <td
-                                  style={{
-                                    fontFamily: "monospace",
-                                    fontSize: "12px",
-                                  }}
-                                >
-                                  {p.name}
-                                </td>
-                                <td>
-                                  <span
-                                    style={{
-                                      padding: "2px 8px",
-                                      borderRadius: "3px",
-                                      fontSize: "11px",
-                                      background:
-                                        p.phase === "Running"
-                                          ? "#dbeafe"
-                                          : p.phase === "Succeeded"
-                                            ? "#dcfce7"
-                                            : "#fef3c7",
-                                      color:
-                                        p.phase === "Running"
-                                          ? "#1e40af"
-                                          : p.phase === "Succeeded"
-                                            ? "#166534"
-                                            : "#92400e",
-                                    }}
-                                  >
-                                    {p.phase}
-                                  </span>
-                                </td>
-                                <td>{p.namespace}</td>
-                                <td>
-                                  {new Date(p.createdAt).toLocaleTimeString()}
-                                </td>
-                              </tr>
+                                <div style={{ fontWeight: 600 }}>{n.node}</div>
+                                <div>
+                                  CPU: {n.cpu} • RAM: {n.memory}
+                                </div>
+                              </div>
                             ))}
-                          </tbody>
-                        </table>
-                      )}
-                    </div>
+                          </div>
+                        ) : (
+                          <div
+                            style={{
+                              fontSize: "12px",
+                              color: "#6b7280",
+                              border: "1px dashed #e5e7eb",
+                              background: "#fff7ed",
+                              borderRadius: "6px",
+                              padding: "8px",
+                            }}
+                          >
+                            Node metrics unavailable. Ensure kubectl works and
+                            cluster nodes are accessible.
+                          </div>
+                        )}
+                      </div>
 
-                    <div className="k8s-section">
-                      <h3>⚙️ K8s Jobs (orchestration layer)</h3>
-                      <p
-                        style={{
-                          fontSize: "12px",
-                          color: "#666",
-                          marginBottom: "12px",
-                        }}
-                      >
-                        Jobs are K8s' way of managing test execution. Each Job
-                        runs one test spec and manages retry/cleanup.
-                      </p>
-                      {k8sJobs.length === 0 ? (
-                        <div style={{ fontSize: "13px", color: "#999" }}>
-                          No jobs yet
+                      <div style={{ marginTop: "14px" }}>
+                        <div style={{ fontWeight: 600, marginBottom: "6px" }}>
+                          Active run details
                         </div>
-                      ) : (
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>Job Name</th>
-                              <th>Desired</th>
-                              <th>Succeeded</th>
-                              <th>Failed</th>
-                              <th>Active</th>
-                              <th>Created</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {k8sJobs.map((j) => (
-                              <tr
-                                key={j.name}
-                                style={{ opacity: j.succeeded > 0 ? 0.6 : 1 }}
-                              >
-                                <td
-                                  style={{
-                                    fontFamily: "monospace",
-                                    fontSize: "12px",
-                                  }}
-                                >
-                                  {j.name}
-                                </td>
-                                <td>{j.completions || 1}</td>
-                                <td
-                                  style={{
-                                    color: "#166534",
-                                    fontWeight: "600",
-                                  }}
-                                >
-                                  {j.succeeded}
-                                </td>
-                                <td
-                                  style={{
-                                    color: "#991b1b",
-                                    fontWeight: "600",
-                                  }}
-                                >
-                                  {j.failed}
-                                </td>
-                                <td>{j.active || 0}</td>
-                                <td>
-                                  {new Date(j.createdAt).toLocaleTimeString()}
-                                </td>
+                        {queue.length === 0 ? (
+                          <div style={{ color: "#6b7280", fontSize: "12px" }}>
+                            No runs yet. Launch specs to see K8s jobs.
+                          </div>
+                        ) : (
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Spec</th>
+                                <th>Run</th>
+                                <th>Status</th>
+                                <th>Pod phase</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )}
+                            </thead>
+                            <tbody>
+                              {queue.slice(-8).map((r) => (
+                                <tr key={r.runId}>
+                                  <td>{r.spec}</td>
+                                  <td>{r.runId.slice(-8)}</td>
+                                  <td>{r.status}</td>
+                                  <td>{r.podPhase || "N/A"}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
